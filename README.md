@@ -1,19 +1,17 @@
 Discord.gd [WIP]
 =========================================
+###### (Godot Plugin - Coming Soon on the Asset Library)
 
 
-Discord Bot API wrapper for Godot 3.3.
-Make bots in 100% GDScript
-It allows you to interact with the Discord API.
-
-This repository holds the latest development version, which means it has the latest features but can also have bugs.
-For a "stable" version, use the asset library or download from a commit tagged with a version.
-The `master` branch is the latest development version, and may have bugs. Some major features can also be in other branches until they are done. For release versions, check the Git branches named after those versions, like `1.0.0`.
+### A Godot plugin to interact with the Discord Bot API.
+> 100% GDScript
 
 
 Features
 --------------
 
+- Make a Discord Bot in less than 10 lines of code
+- Easy and Simple to use
 - Uses Godot signals to emit events like `bot_ready`, `guild_create`, `message_create`, `message_delete`, etc.
 - Send / Receive messages and events from Discord
 - Get User Avatar and Guild Icon as Godot's ImageTexture
@@ -45,9 +43,10 @@ Click on any node in the scene tree of your scene for example `MyBot`:Node2D and
 Example script on `MyBot` node
 
 ```GDScript
+extends Node2D
 
 func _ready():
-	var discord_bot = $$DicordBot
+	var discord_bot = $DicordBot
 	discord_bot.TOKEN = "your_bot_token_here"
 	discord_bot.login()
 	
