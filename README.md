@@ -3,6 +3,7 @@ Discord.gd [WIP]
 
 
 Discord Bot API wrapper for Godot 3.3.
+Make bots in 100% GDScript
 It allows you to interact with the Discord API.
 
 This repository holds the latest development version, which means it has the latest features but can also have bugs.
