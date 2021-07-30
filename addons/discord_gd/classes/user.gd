@@ -22,7 +22,7 @@ const AVATAR_URL_FORMATS = ['webp', 'png', 'jpg', 'jpeg', 'gif']
 const AVATAR_URL_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048]
 
 
-func get_display_avatar(options = {}) -> ImageTexture:
+func get_display_avatar(options = {}) -> PoolByteArray:
 	"""
 	options {
 		format: String, one of webp, png, jpg, jpeg, gif (default png),
@@ -36,15 +36,15 @@ func get_display_avatar(options = {}) -> ImageTexture:
 		'dynamic': false
 	}
 	if options.has('format'):
-		assert(options.format in AVATAR_URL_FORMATS, 'Invalid avatar_url provided to get_display_avatar_url')
+		assert(options.format in AVATAR_URL_FORMATS, 'Invalid avatar_url provided to get_display_avatar')
 		_options.format = options.format
 
 	if options.has('size'):
-		assert(int(options.size) in AVATAR_URL_SIZES, 'Invalid size provided to get_display_avatar_url')
+		assert(int(options.size) in AVATAR_URL_SIZES, 'Invalid size provided to get_display_avatar')
 		_options.size = int(options.size)
 
 	if options.has('dynamic'):
-		assert(typeof(options.dynamic) == TYPE_BOOL, 'dynamic attribute must be of type bool in get_display_avatar_url')
+		assert(typeof(options.dynamic) == TYPE_BOOL, 'dynamic attribute must be of type bool in get_display_avatar')
 		_options.size = options.size
 
 	if avatar.length() == 0:
@@ -54,7 +54,7 @@ func get_display_avatar(options = {}) -> ImageTexture:
 		client._send_get_cdn('/avatars/%s/%s.png?size=%s' % [id, avatar, _options.size]),
 		'completed'
 	)
-	return client._bytes_to_png(png_bytes)
+	return png_bytes
 
 func get_default_avatar() -> ImageTexture:
 	var moduloed_discriminator = int(discriminator) % 5
@@ -62,7 +62,7 @@ func get_default_avatar() -> ImageTexture:
 		client._send_get_cdn('/embed/avatars/%s.png' % moduloed_discriminator),
 		'completed'
 	)
-	return client._bytes_to_png(png_bytes)
+	return png_bytes
 
 func _init(_client, user):
 	client = _client

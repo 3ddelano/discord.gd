@@ -30,7 +30,9 @@ signal message_delete
 
 # Private Variables
 var _gateway_base = 'wss://gateway.discord.gg/?v=9&encoding=json'
-var _https_base = 'https://discord.com/api/v9'
+var _https_domain = 'https://discord.com'
+var _api_slug = '/api/v9'
+var _https_base = _https_domain + _api_slug
 var _cdn_base = 'https://cdn.discordapp.com'
 var _headers: Array
 var _client: WebSocketClient
@@ -59,14 +61,21 @@ var CHANNEL_TYPES = {
 
 var GUILD_ICON_SIZES = [16,32,64,128,256,512,1024,2048]
 
+var ACTIVITY_TYPES = {
+	'GAME': 0,
+	'STREAMING': 1,
+	'LISTENING': 2,
+	'WATCHING': 3,
+	'COMPETING': 5
+}
 
-
+var PRESENCE_STATUS_TYPES = ['ONLINE', 'DND', 'IDLE', 'INVISIBLE', 'OFFLINE']
 
 
 # Public Functions
 func login():
 	assert(TOKEN.length() > 2, 'ERROR: Unable to login. TOKEN attribute not set.')
-	_headers = ['Authorization: Bot %s' % TOKEN, 'User-Agent: discord.gd (localhost, 1.0)']
+	_headers = ['Authorization: Bot %s' % TOKEN, 'User-Agent: discord.gd (https://github.com/3ddelano/discord.gd)']
 	var err = _client.connect_to_url(_gateway_base)
 	if err != OK:
 		print('Unable to connect')
@@ -81,9 +90,11 @@ func login():
 				print('Login Error: Failed (Generic)')
 		return
 
+
 func send(message: Message, content, options: Dictionary = {}):
 	var res = yield(_send_message_request(message, content, options), 'completed')
 	return res
+
 
 func reply(message: Message, content, options: Dictionary = {}):
 	options.message_reference = {
@@ -92,9 +103,11 @@ func reply(message: Message, content, options: Dictionary = {}):
 	var res = yield(_send_message_request(message, content, options), 'completed')
 	return res
 
+
 func edit(message: Message, content, options: Dictionary = {}):
 	var res = yield(_send_message_request(message, content, options, HTTPClient.METHOD_PATCH), 'completed')
 	return res
+
 
 func start_thread(message, thread_name, duration = 60 * 24):
 	var payload = {
@@ -106,8 +119,8 @@ func start_thread(message, thread_name, duration = 60 * 24):
 	return res
 
 
-func get_guild_icon(guild_id: String, size: int = 256) -> ImageTexture:
-	assert(Helpers.is_valid_str(guild_id), 'guild_id must be a valid guild id')
+func get_guild_icon(guild_id: String, size: int = 256):
+	assert(Helpers.is_valid_str(guild_id), 'Invalid Type: guild_id must be a valid String')
 
 	var guild = guilds.get(str(guild_id))
 
@@ -115,16 +128,67 @@ func get_guild_icon(guild_id: String, size: int = 256) -> ImageTexture:
 	assert(guild.icon, 'Guild has no icon set.')
 
 	if size != 256:
-		assert(size in GUILD_ICON_SIZES, 'Invalid guild icon size provided')
+		assert(size in GUILD_ICON_SIZES, 'Invalid size for guild icon provided')
 
 	var png_bytes = yield(
 		_send_get_cdn('/icons/%s/%s.png?size=%s' % [guild.id, guild.icon, size]),
 		'completed'
 	)
-	return _bytes_to_png(png_bytes)
+	return png_bytes
 
-func set_presence():
-	pass
+
+func set_presence(p_options: Dictionary):
+	"""
+		p_options {
+			status: String, text of the presence,
+			afk: bool, whether or not the client is afk,
+
+			activity: {
+				type: String, type of the presence,
+				name: String, name of the presence,
+				url: String, url of the presence,
+				created_at: int, unix timestamp (in milliseconds) of when activity was added to user's session
+			}
+		}
+	"""
+
+	var new_presence = {
+		'status': 'online',
+		'afk': false,
+		'activity': {}
+	}
+
+	assert(p_options, 'Missing options for set_presence')
+	assert(typeof(p_options) == TYPE_DICTIONARY, 'Invalid Type: options in set_presence must be a Dictionary')
+
+	if p_options.has('status') and Helpers.is_valid_str(p_options.status):
+		assert(str(p_options.status).to_upper() in PRESENCE_STATUS_TYPES, 'Invalid Type: status must be one of PRESENCE_STATUS_TYPES')
+		new_presence.status = p_options.status.to_lower()
+	if p_options.has('afk') and typeof(p_options.afk) == TYPE_BOOL:
+		new_presence.afk = p_options.afk
+
+	# Check if an activity was passed
+	if p_options.has('activity') and typeof(p_options.activity) == TYPE_DICTIONARY:
+		if p_options.activity.has('name') and Helpers.is_valid_str(p_options.activity.name):
+			new_presence.activity.name = p_options.activity.name
+
+		if p_options.activity.has('url') and Helpers.is_valid_str(p_options.activity.url):
+			new_presence.activity.url = p_options.activity.url
+
+		if p_options.activity.has('created_at') and Helpers.is_num(p_options.activity.created_at):
+			new_presence.activity.created_at = p_options.activity.created_at
+		else:
+			new_presence.activity.created_at = OS.get_unix_time() * 1000
+
+		if p_options.activity.has('type') and Helpers.is_valid_str(p_options.activity.type):
+			assert(str(p_options.activity.type).to_upper() in ACTIVITY_TYPES, 'Invalid Type: type must be one of ACTIVITY_TYPES')
+			new_presence.activity.type = ACTIVITY_TYPES[str(p_options.activity.type).to_upper()]
+
+
+	print(JSON.print(new_presence, '\t'))
+	_update_presence(new_presence)
+
+
 
 
 
@@ -193,8 +257,11 @@ func _data_received():
 				response_d['d'] = {
 					'token': TOKEN,
 					'intents': INTENTS,
-					'properties':
-					{'$os': 'linux', '$browser': 'discord.gd', '$device': 'discord.gd'}
+					'properties': {
+						'$os': 'linux',
+						'$browser': 'discord.gd',
+						'$device': 'discord.gd'
+					}
 				}
 
 			_send_dict_wss(response_d)
@@ -315,15 +382,90 @@ func _handle_events(dict: Dictionary):
 			var d = dict.d
 			emit_signal('message_delete', self, d)
 
+func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD_POST):
+	var headers = _headers.duplicate(true)
+	var multipart_header = 'Content-Type: multipart/form-data; boundary="boundary"'
+	if headers.find(multipart_header) == -1:
+		headers.append(multipart_header)
+
+	var http_client = HTTPClient.new()
+
+	var body = PoolByteArray()
+
+	# Add the payload_json to the form
+	body.append_array('--boundary\r\n'.to_utf8())
+	body.append_array('Content-Disposition: form-data; name="payload_json"\r\n'.to_utf8())
+	body.append_array('Content-Type: application/json\r\n\r\n'.to_utf8())
+	body.append_array(JSON.print(payload.payload_json).to_utf8())
+
+	var count = 0
+	for file in payload.files:
+		# Extract the name, media_type and data of each file
+		var file_name = file.name
+		var media_type = file.media_type
+		var data = file.data
+		# Add the file to the form
+		body.append_array('\r\n--boundary\r\n'.to_utf8())
+		body.append_array(('Content-Disposition: form-data; name="file' + str(count) + '"; filename="'+ file_name +'"').to_utf8())
+		body.append_array(('\r\nContent-Type: ' + media_type + '\r\n\r\n').to_utf8())
+		body.append_array(data)
+		count += 1
+
+	# End the form-data
+	body.append_array('\r\n--boundary--'.to_utf8())
+	var err = http_client.connect_to_host(_https_domain, -1, true, false)
+	assert(err == OK, 'Error connecting to Discord HTTPS server')
+
+	while http_client.get_status() == HTTPClient.STATUS_CONNECTING or http_client.get_status() == HTTPClient.STATUS_RESOLVING:
+		http_client.poll()
+		yield(get_tree(), 'idle_frame')
+
+	assert(http_client.get_status() == HTTPClient.STATUS_CONNECTED, 'Could not connect to Discord HTTPS server')
+	err = http_client.request_raw(method, _api_slug + slug, headers, body)
+
+	while http_client.get_status() == HTTPClient.STATUS_REQUESTING:
+		http_client.poll()
+		yield(get_tree(), 'idle_frame')
+
+	# Request is made, now extract the reponse body
+	assert(http_client.get_status() == HTTPClient.STATUS_BODY or http_client.get_status() == HTTPClient.STATUS_CONNECTED)
+
+	if http_client.has_response():
+		headers = http_client.get_response_headers_as_dictionary()
+
+		var rb = PoolByteArray()
+		while http_client.get_status() == HTTPClient.STATUS_BODY:
+			# While there is body left to be read
+			http_client.poll()
+			var chunk = http_client.read_response_body_chunk()
+			if chunk.size() == 0:
+				# Got nothing, wait for buffers to fill a bit.
+				OS.delay_usec(1000)
+			else:
+				rb = rb + chunk # Append to read buffer.
+
+		var response = _jsonstring_to_dict(rb.get_string_from_utf8())
+		if response.has('code'):
+			print('Response: status code ', str(http_client.get_response_code()))
+			print(JSON.print(response, '\t'))
+
+		assert(not response.has('code'), 'Error sending request. See output window')
+
+		return response
+	else:
+		assert(false, 'Unable to upload file. Got empty response from server')
+
 func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD_POST):
-	if _headers.find('Content-Type: application/json') == -1:
-		_headers.append('Content-Type: application/json')
+	var headers = _headers.duplicate(true)
+
+	var json_header = 'Content-Type: application/json'
+	if headers.find(json_header) == -1:
+		headers.append(json_header)
 
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
-#	http_request.use_threads = true
 
-	http_request.call_deferred('request', _https_base + slug, _headers, false, method, JSON.print(payload))
+	http_request.call_deferred('request', _https_base + slug, headers, false, method, JSON.print(payload))
 
 	var data = yield(http_request, 'request_completed')
 	http_request.queue_free()
@@ -343,7 +485,7 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 	return response
 
 func _get_dm_channel(channel_id: String) -> Dictionary:
-	assert(Helpers.is_valid_str(channel_id), 'channel_id must be a valid String')
+	assert(Helpers.is_valid_str(channel_id), 'Invalid Type: channel_id must be a valid String')
 	var data = yield(_send_get('/channels/%s' % channel_id), 'completed')
 	return data
 
@@ -387,42 +529,47 @@ func _send_message_request(message: Message, content, options := {}, method := H
 	var payload = {
 		'content': null,
 		'tts': false,
-		'file': null,
 		'embeds': null,
-		'payload_json': null,
 		'allowed_mentions': null,
 		'message_reference': null
 	}
 
+	var slug = '/channels/%s/messages' % str(message.channel_id)
+	# Handle edit message
+	if method == HTTPClient.METHOD_PATCH:
+		slug += '/' + str(message.id)
+		if typeof(message.attachments) == TYPE_ARRAY:
+			if message.attachments.size() == 0:
+				payload.attachments = null
+			else:
+				# Add the attachments to keep to the payload
+				payload.attachments = message.attachments
+
 	if not message is Message:
-		assert(false, 'stop')
+		assert(false, 'Invalid Type: message must be a valid Message')
 
-
+	# Check if the content is only a string
 	if typeof(content) == TYPE_STRING and content.length() > 0:
 		assert(content.length() < 2048, 'Message content must be less than 2048 characters')
 		payload.content = content
 
+	# Check if the content is the options dictionary
 	elif typeof(content) == TYPE_DICTIONARY:
 		options = content
 		content = null
 
+	# Parse the options
 	if typeof(options) == TYPE_DICTIONARY:
-		"""parse the message options - refer to discord api docs
+		"""parse the message options - refer https://discord.com/developers/docs/resources/channel#create-message-jsonform-params
 		options {
 			tts: bool,
-			file: file contents,
 			embeds: array,
-			payload_json: string,
 			allowed_mentions: object,
 			message_reference: object,
-			components: TODO
 		}
 		"""
 		if options.has('tts') && options.tts:
 			payload.tts = true
-
-		if options.has('file') && options.file:
-			payload.tts = options.file
 
 		if options.has('embeds') && options.embeds.size() > 0:
 			for embed in options.embeds:
@@ -430,9 +577,6 @@ func _send_message_request(message: Message, content, options := {}, method := H
 					if payload.embeds == null:
 						payload.embeds = []
 					payload.embeds.append(embed._to_dict())
-
-		if options.has('payload_json') && options.payload_json:
-			payload.payload_json = options.payload_json
 
 		if options.has('allowed_mentions') && options.allowed_mentions:
 			if typeof(options.allowed_mentions) == TYPE_DICTIONARY:
@@ -457,25 +601,60 @@ func _send_message_request(message: Message, content, options := {}, method := H
 			"""
 			payload.message_reference = options.message_reference
 
-		# TODO: handle sending message components
+		if options.has('files') and options.files:
+			assert(typeof(options.files) == TYPE_ARRAY, 'Invalid Type: files in message options must be an array')
+
+			if options.files.size() > 0:
+				# Loop through each file
+				for file in options.files:
+					assert(file.has('name') and Helpers.is_valid_str(file.name), 'Missing name for file in files')
+					assert(file.has('media_type') and Helpers.is_valid_str(file.media_type), 'Missing media_type for file in files')
+					assert(file.has('data') and file.data, 'Missing data for file in files')
+					assert(file.data is PoolByteArray, 'Invalid Type: data of file in files must be PoolByteArray')
+
+
+			var json_payload = payload.duplicate(true)
+			var new_payload = {
+				'files': options.files,
+				'payload_json': json_payload
+			}
+			payload = new_payload
+
 
 	var res
-	# Handle edit message
-	if method == HTTPClient.METHOD_PATCH:
-		res = yield(_send_request('/channels/%s/messages/%s' % [str(message.channel_id), str(message.id)], payload, method), 'completed')
-	else:
-		res = yield(_send_request('/channels/%s/messages' % str(message.channel_id), payload, method), 'completed')
+	if payload.has('files') and payload.files and typeof(payload.files) == TYPE_ARRAY:
+		# Send raw post request using multipart/form-data
+		var coroutine = _send_raw_request(slug, payload, method)
+		if typeof(coroutine) == TYPE_OBJECT:
+			res = yield(coroutine, 'completed')
+		else:
+			res = coroutine
 
+	else:
+		res = yield(_send_request(slug, payload, method), 'completed')
 
 
 	var coroutine = _parse_message(res)
 	if typeof(coroutine) == TYPE_OBJECT:
-		print('waiting to parse message')
 		coroutine = yield(coroutine, 'completed')
 
 	var msg = Message.new(res)
 	return msg
 
+func _update_presence(new_presence: Dictionary):
+	var status = new_presence.status
+	var activity = new_presence.activity
+
+	var response_d = {
+		'op': 3, # Presence update
+	}
+	response_d['d'] = {
+		'since': new_presence if new_presence.has('since') else null,
+		'status': new_presence.status,
+		'afk': new_presence.afk,
+		'activities': [new_presence.activity]
+	}
+	_send_dict_wss(response_d)
 
 
 
@@ -508,9 +687,8 @@ func _clean_channel(channel):
 	if channel.has('type') and str(channel.type) in CHANNEL_TYPES.keys():
 		channel.type = CHANNEL_TYPES.get(str(channel.type))
 
-
 func _parse_message(message: Dictionary):
-	assert(typeof(message) == TYPE_DICTIONARY, 'message to be parsed must be a Dictionary')
+	assert(typeof(message) == TYPE_DICTIONARY, 'Invalid Type: message must be a Dictionary')
 
 	if message.has('channel_id') and message.channel_id:
 		# Check if channel is cached
@@ -538,58 +716,4 @@ func _parse_message(message: Dictionary):
 		else:
 			message.author = User.new(self, message.author)
 
-#	if message.has('channel_id'):
-#		var channel = channels.get(str(message.channel_id))
-#		if channel:
-#			message.channel = channel
-#		else:
-#			# check if channel is a dm channel
-#			channel = dm_channels.get(str(message.channel_id))
-#
-#			if channel:
-#				message.channel = channel
-#			else:
-#				# try fetcing the dm channel from api
-#				if VERBOSE:
-#					print('Fetching DM channel: %s from api' % message.channel_id)
-#
-#				channel = yield(_get_dm_channel(message.channel_id), 'completed')
-#				_clean_channel(channel)
-#
-#				if channel and channel.has('type') and channel.type == 'DM':
-#					if VERBOSE:
-#						print('Caching a new DM channel:', channel.id)
-#					dm_channels[str(message.channel_id)] = channel
-#				else:
-#					return null
-#					# not a valid channel, it might be a thread
-#
-#			message.channel = channel
-#		message.erase('channel_id')
-
-#	if message.has('author') and typeof(message.author) == TYPE_DICTIONARY:
-#		# get the cached author of the message
-#		var user = users.get(str(message.author.id))
-#		if user:
-#			message.author = user
-#		else:
-#			message.author = User.new(self, message.author)
-
-#	if message.type == 19: # TODO: Don't hard code the message type
-#		if message.has('message_reference') and message.message_reference:
-#			# message was a reply to another message
-#			message.guild = guilds.get(str(message.message_reference.guild_id))
-
-#	if message.has('guild_id'):
-#		message.guild = guilds.get(str(message.guild_id))
-#		message.erase('guild_id')
-
 	return 1
-
-func _bytes_to_png(bytes: PoolByteArray) -> ImageTexture:
-	var image: Image = Image.new()
-	image.load_png_from_buffer(bytes)
-	var texture = ImageTexture.new()
-	texture.create_from_image(image)
-	texture.set_data(image)
-	return texture

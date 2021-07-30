@@ -85,7 +85,8 @@ func _init(message: Dictionary):
 	if message.has('guild_id') and message.guild_id:
 		guild_id = message.guild_id
 
-	assert(not (message.content == '' and message.embeds.size() == 0), 'Message must have a content or embed')
+
+	assert(not (message.content == '' and message.embeds.size() == 0 and message.attachments.size() == 0), 'Message must have a content or embed')
 	content = message.content
 
 	assert(message.timestamp, 'Message must have a timestamp')
@@ -153,3 +154,22 @@ func _to_string():
 
 func has(attribute):
 	return true if self[attribute] else false
+
+func slice_attachments(index: int, delete_count: int = 1, replace_attachments: Array = []):
+	var n = attachments.size()
+	assert(Helpers.is_num(index), 'index must be provided to Message.slice_attachments')
+	assert(index > -1 and index < n, 'index out of bounds in Message.slice_attachments')
+
+	var max_deletable = n - index
+	assert(delete_count <= max_deletable, 'delete_count out of bounds in Message.attachments')
+
+	while delete_count != 0:
+		attachments.remove(index)
+		delete_count -= 1
+
+	if replace_attachments.size() > 0:
+		for attachment in replace_attachments:
+			assert(attachment.has('id') and Helpers.is_valid_str(attachment.id), 'Missing id for attachment in replace_attachments in slice_attachments')
+		attachments.append_array(replace_attachments)
+
+	return self

@@ -43,8 +43,20 @@ static func save_dict(d: Dictionary, filename = 'saved_dict'):
 	assert(typeof(d) == TYPE_DICTIONARY, 'type of d is not Dictionary in save_dict')
 	var file = File.new()
 	file.open('user://%s%s.json' % [filename, str(OS.get_ticks_msec())], File.WRITE)
-	#file.store_string(JSON.print(d, '\t'))
-	file.store_line(to_json(d))
-	assert(false)
+	file.store_string(JSON.print(d, '\t'))
 	file.close()
 	print('Dictionary saved to file')
+
+
+# Converts a raw image bytes to a png Image
+static func to_png_image(bytes: PoolByteArray) -> Image:
+	var image = Image.new()
+	image.load_png_from_buffer(bytes)
+	return image
+
+
+# Converts a Image to ImageTexture
+static func to_image_texture(image: Image) -> ImageTexture:
+	var texture = ImageTexture.new()
+	texture.create_from_image(image)
+	return texture
