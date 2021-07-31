@@ -1,4 +1,9 @@
 class_name Embed
+"""
+Stores data about a Discord Embed
+and has functions to add, modify and edit
+the various properties of an Embed.
+"""
 
 var title: String setget set_title, get_title
 var type: String = 'rich' setget set_type, get_type
@@ -192,9 +197,11 @@ func slice_fields(index: int, delete_count: int = 1, replace_fields: Array = [])
 	return self
 
 
-func _to_string() -> String:
-	return JSON.print(_to_dict())
+func _to_string(pretty: bool = false) -> String:
+	return JSON.print(_to_dict(), '\t') if pretty else JSON.print(_to_dict())
 
+func print():
+	print(_to_string(true))
 
 func _to_dict() -> Dictionary:
 	var total = title + description

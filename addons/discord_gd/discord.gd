@@ -2,10 +2,16 @@ tool
 extends HTTPRequest
 class_name DiscordBot
 
+"""
+Main script for discord.gd plugin
+Copyright 2021, Delano Lourenco
+For Copyright and License: See LICENSE.md
+"""
+
 # Public Variables
 var TOKEN: String
-var VERBOSE = false
-var INTENTS = 513
+var VERBOSE: bool = false
+var INTENTS: int = 513
 
 
 # Caches
@@ -13,16 +19,15 @@ var user: User
 var application: Dictionary
 var guilds = {}
 var channels = {}
-var dm_channels = {}
 var users = {}
 
 
 # Signals
-signal bot_ready
-signal guild_create
-signal guild_delete
-signal message_create
-signal message_delete
+signal bot_ready(bot) # bot: DiscordBot
+signal guild_create(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal guild_delete(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal message_create(bot, message, channel) # bot: DiscordBot, message: Message, channel: Dictionary
+signal message_delete(bot, message) # bot: DiscordBot, message: Dictionary
 
 
 
@@ -73,7 +78,7 @@ var PRESENCE_STATUS_TYPES = ['ONLINE', 'DND', 'IDLE', 'INVISIBLE', 'OFFLINE']
 
 
 # Public Functions
-func login():
+func login() -> void:
 	assert(TOKEN.length() > 2, 'ERROR: Unable to login. TOKEN attribute not set.')
 	_headers = ['Authorization: Bot %s' % TOKEN, 'User-Agent: discord.gd (https://github.com/3ddelano/discord.gd)']
 	var err = _client.connect_to_url(_gateway_base)
@@ -91,12 +96,12 @@ func login():
 		return
 
 
-func send(message: Message, content, options: Dictionary = {}):
+func send(message: Message, content, options: Dictionary = {}) -> Message:
 	var res = yield(_send_message_request(message, content, options), 'completed')
 	return res
 
 
-func reply(message: Message, content, options: Dictionary = {}):
+func reply(message: Message, content, options: Dictionary = {}) -> Message:
 	options.message_reference = {
 		'message_id': message.id
 	}
@@ -104,12 +109,12 @@ func reply(message: Message, content, options: Dictionary = {}):
 	return res
 
 
-func edit(message: Message, content, options: Dictionary = {}):
+func edit(message: Message, content, options: Dictionary = {}) -> Message:
 	var res = yield(_send_message_request(message, content, options, HTTPClient.METHOD_PATCH), 'completed')
 	return res
 
 
-func start_thread(message, thread_name, duration = 60 * 24):
+func start_thread(message: Message, thread_name: String, duration: int = 60 * 24) -> Dictionary:
 	var payload = {
 		'name': thread_name,
 		'auto_archive_duration': duration
@@ -119,7 +124,7 @@ func start_thread(message, thread_name, duration = 60 * 24):
 	return res
 
 
-func get_guild_icon(guild_id: String, size: int = 256):
+func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 	assert(Helpers.is_valid_str(guild_id), 'Invalid Type: guild_id must be a valid String')
 
 	var guild = guilds.get(str(guild_id))
@@ -137,7 +142,7 @@ func get_guild_icon(guild_id: String, size: int = 256):
 	return png_bytes
 
 
-func set_presence(p_options: Dictionary):
+func set_presence(p_options: Dictionary) -> void:
 	"""
 		p_options {
 			status: String, text of the presence,
@@ -185,7 +190,6 @@ func set_presence(p_options: Dictionary):
 			new_presence.activity.type = ACTIVITY_TYPES[str(p_options.activity.type).to_upper()]
 
 
-	print(JSON.print(new_presence, '\t'))
 	_update_presence(new_presence)
 
 
@@ -193,7 +197,7 @@ func set_presence(p_options: Dictionary):
 
 
 # Private Functions
-func _ready():
+func _ready() -> void:
 	randomize()
 #
 	# Generate needed nodes
@@ -208,7 +212,7 @@ func _ready():
 
 	$HeartbeatTimer.connect('timeout', self, '_send_heartbeat')
 
-func _generate_timer_nodes():
+func _generate_timer_nodes() -> void:
 	var heart_beat_timer = Timer.new()
 	heart_beat_timer.name = 'HeartbeatTimer'
 	add_child(heart_beat_timer)
@@ -217,7 +221,7 @@ func _generate_timer_nodes():
 	invalid_session_timer.name = 'InvalidSessionTimer'
 	add_child(invalid_session_timer)
 
-func _connection_closed(was_clean_close: bool):
+func _connection_closed(was_clean_close: bool) -> void:
 	if was_clean_close:
 		if VERBOSE:
 			print('WSS connection closed cleanly')
@@ -225,15 +229,15 @@ func _connection_closed(was_clean_close: bool):
 		if VERBOSE:
 			print('WSS connection closed unexpectedly')
 
-func _connection_error():
+func _connection_error() -> void:
 	if VERBOSE:
 		print('WSS connection error')
 
-func _connection_established(protocol: String):
+func _connection_established(protocol: String) -> void:
 	if VERBOSE:
 		print('Connected with protocol: ', protocol)
 
-func _data_received():
+func _data_received() -> void:
 	var packet := _client.get_peer(1).get_packet()
 	var data := packet.get_string_from_utf8()
 
@@ -281,7 +285,7 @@ func _data_received():
 			# Event Dispatched
 			_handle_events(dict)
 
-func _process(_delta):
+func _process(_delta) -> void:
 	# Run only when in game and not in the editor
 	if not Engine.is_editor_hint():
 		# Poll the web socket if connected otherwise reconnect
@@ -294,17 +298,18 @@ func _process(_delta):
 		else:
 			_client.connect_to_url(_gateway_base)
 
-func _send_heartbeat(): # Send heartbeat OP code 1
+func _send_heartbeat() -> void: # Send heartbeat OP code 1
 	if not _heartbeat_ack_received:
 		_client.disconnect_from_host(1002)
 		return
+
 	var response_payload = {'op': 1, 'd': _last_seq}
 	_send_dict_wss(response_payload)
 	_heartbeat_ack_received = false
 	if VERBOSE:
 		print('Heartbeat sent!')
 
-func _handle_events(dict: Dictionary):
+func _handle_events(dict: Dictionary) -> void:
 	_last_seq = dict.s
 	var event_name = dict.t
 
@@ -315,7 +320,7 @@ func _handle_events(dict: Dictionary):
 
 			var _application = d.application
 			var _guilds = d.guilds
-			_clean_guilds(guilds)
+			_clean_guilds(_guilds)
 
 			var _user: User = User.new(self, d.user)
 			user = _user
@@ -566,6 +571,7 @@ func _send_message_request(message: Message, content, options := {}, method := H
 			embeds: array,
 			allowed_mentions: object,
 			message_reference: object,
+			files: Array
 		}
 		"""
 		if options.has('tts') && options.tts:
@@ -641,7 +647,7 @@ func _send_message_request(message: Message, content, options := {}, method := H
 	var msg = Message.new(res)
 	return msg
 
-func _update_presence(new_presence: Dictionary):
+func _update_presence(new_presence: Dictionary) -> void:
 	var status = new_presence.status
 	var activity = new_presence.activity
 
@@ -663,18 +669,18 @@ func _jsonstring_to_dict(data: String) -> Dictionary:
 	var json_parsed = JSON.parse(data)
 	return json_parsed.result
 
-func _setup_heartbeat_timer(interval):
+func _setup_heartbeat_timer(interval: int) -> void:
 	# Setup heartbeat timer and start it
 	_heartbeat_interval = int(interval) / 1000
 	var timer = $HeartbeatTimer
 	timer.wait_time = _heartbeat_interval
 	timer.start()
 
-func _send_dict_wss(d: Dictionary):
+func _send_dict_wss(d: Dictionary) -> void:
 	var payload = to_json(d)
 	_client.get_peer(1).put_packet(payload.to_utf8())
 
-func _clean_guilds(guilds):
+func _clean_guilds(guilds: Array) -> void:
 	for guild in guilds:
 		# converts the unavailable property to available
 		if guild.has('unavailable'):
@@ -683,7 +689,7 @@ func _clean_guilds(guilds):
 			guild.available = true
 		guild.erase('unavailable')
 
-func _clean_channel(channel):
+func _clean_channel(channel: Dictionary) -> void:
 	if channel.has('type') and str(channel.type) in CHANNEL_TYPES.keys():
 		channel.type = CHANNEL_TYPES.get(str(channel.type))
 

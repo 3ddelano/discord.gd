@@ -1,4 +1,7 @@
 class_name Message
+"""
+Represents a Discord Message
+"""
 
 var id: String
 var channel_id: String
@@ -126,31 +129,34 @@ func _init(message: Dictionary):
 	if message.has('referenced_message') and message.referenced_message:
 		referenced_message = message.referenced_message
 
-func _to_string():
-	return JSON.print(
-		{
-			'id': id,
-			'channel_id': channel_id,
-			'guild_id': guild_id,
-			'author': author,
-			'member': member,
-			'content': content,
-			'timestamp': timestamp,
-			'edited_timestamp': edited_timestamp,
-			'tts': tts,
-			'mention_everyone': mention_everyone,
-			'mentions': mentions,
-			'mention_roles': mention_roles,
-			'mention_channels': mention_channels,
-			'attachments': attachments,
-			'embeds': embeds,
-			'reactions': reactions,
-			'pinned': pinned,
-			'type': type,
-			'message_reference': message_reference,
-			'referenced_message': referenced_message
-		}
-	)
+func _to_string(pretty: bool = false):
+	var data = {
+		'id': id,
+		'channel_id': channel_id,
+		'guild_id': guild_id,
+		'author': author,
+		'member': member,
+		'content': content,
+		'timestamp': timestamp,
+		'edited_timestamp': edited_timestamp,
+		'tts': tts,
+		'mention_everyone': mention_everyone,
+		'mentions': mentions,
+		'mention_roles': mention_roles,
+		'mention_channels': mention_channels,
+		'attachments': attachments,
+		'embeds': embeds,
+		'reactions': reactions,
+		'pinned': pinned,
+		'type': type,
+		'message_reference': message_reference,
+		'referenced_message': referenced_message
+	}
+
+	return JSON.print(data, '\t') if pretty else JSON.print(data)
+
+func print():
+	print(_to_string(true))
 
 func has(attribute):
 	return true if self[attribute] else false

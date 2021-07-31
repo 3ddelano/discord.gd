@@ -1,4 +1,7 @@
 class_name User
+"""
+Represents a Discord User
+"""
 
 var id: String
 var username: String
@@ -123,19 +126,23 @@ func _init(_client, user):
 		assert(Helpers.is_num(user.public_flags), 'public_flags attribute of User must be int')
 		public_flags = user.public_flags
 
-func _to_string():
-	return JSON.print({
-			'id': id,
-			'username': username,
-			'discriminator': discriminator,
-			'avatar': avatar,
-			'bot': bot,
-			'system': system,
-			'mfa_enabled': mfa_enabled,
-			'locale': locale,
-			'verified': verified,
-			'email': email,
-			'flags': flags,
-			'premium_type': premium_type,
-			'public_flags': public_flags
-		})
+func _to_string(pretty: bool = false):
+	var data = {
+		'id': id,
+		'username': username,
+		'discriminator': discriminator,
+		'avatar': avatar,
+		'bot': bot,
+		'system': system,
+		'mfa_enabled': mfa_enabled,
+		'locale': locale,
+		'verified': verified,
+		'email': email,
+		'flags': flags,
+		'premium_type': premium_type,
+		'public_flags': public_flags
+	}
+	return JSON.print(data, '\t') if pretty else JSON.print(data)
+
+func print():
+	print(_to_string(true))
