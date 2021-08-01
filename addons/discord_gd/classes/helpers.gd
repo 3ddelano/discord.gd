@@ -20,26 +20,19 @@ static func is_valid_str(value) -> bool:
 
 
 # Return a ISO 8601 timestamp as a String
-static func make_iso_string(datetime: Dictionary = OS.get_datetime()) -> String:
+static func make_iso_string(datetime: Dictionary = OS.get_datetime(true)) -> String:
 	var iso_string = '%s-%02d-%02dT%02d:%02d:%02d' % [datetime.year, datetime.month, datetime.day, datetime.hour, datetime.minute, datetime.second]
 
-	# generate correct local timezone
-	var timezone = OS.get_time_zone_info()
-	var zone_sign = '+' if timezone.bias > 0 else '-'
-	var zone_hour = int(timezone.bias / 60)
-	timezone.bias -= zone_hour * 60
-
-	iso_string +=  '%s%02d:%02d' % [zone_sign, zone_hour, timezone.bias]
 	return iso_string
 
 
 # Pretty prints a Dictionary
-static func print_dict(d: Dictionary):
+static func print_dict(d: Dictionary) -> void:
 	print(JSON.print(d, '\t'))
 
 
 # Saves a Dictionary to a file for debugging large dictionaries
-static func save_dict(d: Dictionary, filename = 'saved_dict'):
+static func save_dict(d: Dictionary, filename = 'saved_dict') -> void:
 	assert(typeof(d) == TYPE_DICTIONARY, 'type of d is not Dictionary in save_dict')
 	var file = File.new()
 	file.open('user://%s%s.json' % [filename, str(OS.get_ticks_msec())], File.WRITE)

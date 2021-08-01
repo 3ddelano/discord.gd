@@ -25,7 +25,7 @@ const AVATAR_URL_FORMATS = ['webp', 'png', 'jpg', 'jpeg', 'gif']
 const AVATAR_URL_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048]
 
 
-func get_display_avatar(options = {}) -> PoolByteArray:
+func get_display_avatar(options: Dictionary = {}) -> PoolByteArray:
 	"""
 	options {
 		format: String, one of webp, png, jpg, jpeg, gif (default png),
@@ -48,7 +48,7 @@ func get_display_avatar(options = {}) -> PoolByteArray:
 
 	if options.has('dynamic'):
 		assert(typeof(options.dynamic) == TYPE_BOOL, 'dynamic attribute must be of type bool in get_display_avatar')
-		_options.size = options.size
+		_options.dynamic = options.dynamic
 
 	if avatar.length() == 0:
 		return get_default_avatar()

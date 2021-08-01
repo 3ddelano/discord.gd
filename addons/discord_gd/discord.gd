@@ -46,6 +46,7 @@ var _last_seq: float
 var _invalid_session_is_resumable: bool
 var _heartbeat_interval: int
 var _heartbeat_ack_received = true
+var _login_error
 
 # Count of the number of guilds initially loaded
 var guilds_loaded = 0
@@ -81,19 +82,23 @@ var PRESENCE_STATUS_TYPES = ['ONLINE', 'DND', 'IDLE', 'INVISIBLE', 'OFFLINE']
 func login() -> void:
 	assert(TOKEN.length() > 2, 'ERROR: Unable to login. TOKEN attribute not set.')
 	_headers = ['Authorization: Bot %s' % TOKEN, 'User-Agent: discord.gd (https://github.com/3ddelano/discord.gd)']
-	var err = _client.connect_to_url(_gateway_base)
-	if err != OK:
-		print('Unable to connect')
-		set_process(false)
+	_login_error = _client.connect_to_url(_gateway_base)
+
+	# No internet?
+	if _login_error == ERR_INVALID_PARAMETER:
+		print('Trying to reconnect in 5s')
+		yield(get_tree().create_timer(5), 'timeout')
+		var coroutine = self.login()
 	else:
-		match err:
+		match _login_error:
 			ERR_UNAUTHORIZED:
 				print('Login Error: Unauthorized')
 			ERR_UNAVAILABLE:
 				print('Login Error: Unavailable')
 			FAILED:
 				print('Login Error: Failed (Generic)')
-		return
+
+	return
 
 
 func send(message: Message, content, options: Dictionary = {}) -> Message:
@@ -113,6 +118,10 @@ func edit(message: Message, content, options: Dictionary = {}) -> Message:
 	var res = yield(_send_message_request(message, content, options, HTTPClient.METHOD_PATCH), 'completed')
 	return res
 
+
+func delete(message: Message):
+	var res = yield(_send_message_request(message, '', {}, HTTPClient.METHOD_DELETE), 'completed')
+	return res
 
 func start_thread(message: Message, thread_name: String, duration: int = 60 * 24) -> Dictionary:
 	var payload = {
@@ -371,6 +380,10 @@ func _handle_events(dict: Dictionary) -> void:
 			if d.has('webhook_id') and d.webhook_id:
 				return
 
+			if d.has('sticker_items') and d.sticker_items and typeof(d.sticker_items) == TYPE_ARRAY:
+				if d.sticker_items.size() != 0:
+					return
+
 			var coroutine = _parse_message(d)
 			if typeof(coroutine) == TYPE_OBJECT:
 				coroutine = yield(coroutine, 'completed')
@@ -480,12 +493,13 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 
 	var response = _jsonstring_to_dict(data[3].get_string_from_utf8())
 
-	if response.has('code'):
+	if response and response.has('code'):
 		# Got an error
 		print('Response: status code ', str(data[1]))
 		print('Error: ' + JSON.print(response, '\t'))
 
-	assert(not response.has('code'), 'Error sending request. See output window')
+	if method != HTTPClient.METHOD_DELETE:
+		assert(not response.has('code'), 'Error sending request. See output window')
 
 	return response
 
@@ -540,8 +554,8 @@ func _send_message_request(message: Message, content, options := {}, method := H
 	}
 
 	var slug = '/channels/%s/messages' % str(message.channel_id)
-	# Handle edit message
-	if method == HTTPClient.METHOD_PATCH:
+	# Handle edit message or delete message
+	if method == HTTPClient.METHOD_PATCH or method == HTTPClient.METHOD_DELETE:
 		slug += '/' + str(message.id)
 		if typeof(message.attachments) == TYPE_ARRAY:
 			if message.attachments.size() == 0:
@@ -640,12 +654,15 @@ func _send_message_request(message: Message, content, options := {}, method := H
 		res = yield(_send_request(slug, payload, method), 'completed')
 
 
-	var coroutine = _parse_message(res)
-	if typeof(coroutine) == TYPE_OBJECT:
-		coroutine = yield(coroutine, 'completed')
+	if method == HTTPClient.METHOD_DELETE:
+		return res
+	else:
+		var coroutine = _parse_message(res)
+		if typeof(coroutine) == TYPE_OBJECT:
+			coroutine = yield(coroutine, 'completed')
 
-	var msg = Message.new(res)
-	return msg
+		var msg = Message.new(res)
+		return msg
 
 func _update_presence(new_presence: Dictionary) -> void:
 	var status = new_presence.status

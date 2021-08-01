@@ -148,7 +148,7 @@ func set_provider(name: String, url: String = ''):
 
 
 func set_author(
-	name: String = '', url: String = '', icon_url: String = '', proxy_icon_url: String = ''
+	name: String, url: String = '', icon_url: String = '', proxy_icon_url: String = ''
 ):
 	assert(Helpers.is_valid_str(name), 'Invalid Type: author name of Embed must be a valid String')
 	assert(name.length() <= 256, 'Embed author name must be <= 256 characters')
@@ -162,7 +162,7 @@ func set_author(
 	return self
 
 
-func add_field(name: String, value: String = '', inline: bool = false):
+func add_field(name: String, value: String, inline: bool = false):
 	assert(Helpers.is_valid_str(name), 'Invalid Type: field name of Embed must be a valid String')
 	assert(Helpers.is_valid_str(value), 'Invalid Type: field value of Embed must be a valid String')
 
@@ -234,50 +234,3 @@ func _to_dict() -> Dictionary:
 		'author': author,
 		'fields': fields
 	}
-
-
-"""
-func make_embed(data = {}):
-
-	var footer = null
-	var image = null
-	var thumbnail = null
-	var video = null
-	var provider = null
-	var author = null
-	var fields = null
-
-
-	if data.has('footer') and typeof(data.footer) == TYPE_DICTIONARY:
-		footer = data.footer
-
-	if data.has('image') and typeof(data.image) == TYPE_DICTIONARY:
-		image = data.image
-
-	if data.has('thumbnail') and typeof(data.thumbnail) == TYPE_DICTIONARY:
-		thumbnail = data.thumbnail
-
-	if data.has('video') and typeof(data.video) == TYPE_DICTIONARY:
-		video = data.video
-
-	if data.has('provider') and typeof(data.provider) == TYPE_DICTIONARY:
-		provider = data.provider
-
-	if data.has('author') and typeof(data.author) == TYPE_DICTIONARY:
-		author = data.author
-
-	if data.has('fields') and typeof(data.fields) == TYPE_ARRAY:
-		fields = []
-		for field in data.fields:
-			fields.append(field)
-
-	return {
-		'footer': footer,
-		'image': image,
-		'thumbnail': thumbnail,
-		'video': video,
-		'provider': provider,
-		'author': author,
-		'fields': fields
-	}
-"""

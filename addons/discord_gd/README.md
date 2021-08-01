@@ -63,7 +63,7 @@ func _on_DiscordBot_bot_ready(bot: DiscordBot):
 Documentation
 ----------
 
-Check the [Wiki](https://github.com/3ddelano/wiki) Tab
+Check the [Wiki](https://github.com/3ddelano/discord.gd/wiki) Tab
 
 
 Contributing
