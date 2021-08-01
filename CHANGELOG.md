@@ -4,8 +4,9 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
-1.0.x
+1.0.1
 ------
+- Bot will try to reconnect every 5s if initially there is no internet
 - Added support to delete messages. DiscordBot.delete()
 - Fixed bot crashing when only stickers were sent
 - Made Helpers.make_iso_string() more efficient
