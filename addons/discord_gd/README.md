@@ -1,6 +1,6 @@
 Discord.gd
 =========================================
-###### (Godot Plugin - Coming Soon on the Asset Library)
+###### (Get it from Godot Asset Library - https://godotengine.org/asset-library/asset/1010)
 
 
 ### A Godot plugin to interact with the Discord Bot API. Make Discord Bots in Godot!
@@ -8,7 +8,7 @@ Discord.gd
 > 100% GDScript
 
 <br>
-<img alt="Godot3" src="https://img.shields.io/badge/-Godot 3.x-478CBF?style=for-the-badge&logo=godotengine&logoWidth=20&logoColor=white" />
+<img alt="Godot3" src="https://img.shields.io/badge/-Godot 3.3.x-478CBF?style=for-the-badge&logo=godotengine&logoWidth=20&logoColor=white" />
 
 Features
 --------------
@@ -41,7 +41,7 @@ Getting Started
 1. After activating the plugin. There will be a new DiscordBot node added to Godot.
 Click on any node in the scene tree of your scene for example `MyBot`:Node2D and add the DiscordBot as a child.
 
-2. Connect the various signals (`bot_ready`, `guild_create`, `message_create`, `message_delete`, etc) of the DiscordBot to the parent node
+2. Connect the various signals (`bot_ready`, `guild_create`, `message_create`, `message_delete`, etc) of the DiscordBot to the parent node, either through the GUI or in the script using the connect() function.
 
 3. Attach a script to the parent node.
 Example script on `MyBot` node
@@ -56,14 +56,12 @@ func _ready():
 	
 func _on_DiscordBot_bot_ready(bot: DiscordBot):
 	print('Logged in as ' + bot.user.username + '#' + bot.user.discriminator)
-	print('Listening on ' + bot.channels.size() + ' channels and ' + bot.guilds.size() ' guilds.')
+	print('Listening on ' + str(bot.channels.size()) + ' channels and ' + str(bot.guilds.size()) ' guilds.')
 
 ```
 
-Documentation
+[Documentation](https://github.com/3ddelano/discord.gd/wiki)
 ----------
-
-Check the [Wiki](https://github.com/3ddelano/discord.gd/wiki) Tab
 
 
 Contributing
@@ -82,4 +80,4 @@ Thanks for your support :)
 <a href="https://www.buymeacoffee.com/3ddelano" target="_blank"><img height="41" width="174" src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy Me A Coffee" width="150" ></a>
 
 ### Support Server
-Join the Discord Server: [3ddelano Cafe](https://discord.gg/FZY9TqW)
+For doubts / help / bugs / problems / suggestions do join: [3ddelano Cafe](https://discord.gg/FZY9TqW)

@@ -469,6 +469,12 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 
 		assert(not response.has('code'), 'Error sending request. See output window')
 
+
+		if response.has('retry_after'):
+			# We got ratelimited
+			yield(get_tree().create_timer(int(response.retry_after)), 'timeout')
+			response = yield(_send_raw_request(slug, payload, method), 'completed')
+
 		return response
 	else:
 		assert(false, 'Unable to upload file. Got empty response from server')
@@ -500,6 +506,11 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 
 	if method != HTTPClient.METHOD_DELETE:
 		assert(not response.has('code'), 'Error sending request. See output window')
+
+	if response.has('retry_after'):
+		# We got ratelimited
+		yield(get_tree().create_timer(int(response.retry_after)), 'timeout')
+		response = yield(_send_request(slug, payload, method), 'completed')
 
 	return response
 

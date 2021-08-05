@@ -73,12 +73,13 @@ func _init(_client, user):
 	assert(user.has('id'), 'User must have an id')
 	assert(user.has('username'), 'User must have a username')
 	assert(user.has('discriminator'), 'User must have a discriminator')
-	assert(user.has('avatar'), 'User must have a avatar')
+
 
 	id = user.id
 	username = user.username
 	discriminator = user.discriminator
-	avatar = user.avatar
+	if user.avatar:
+		avatar = user.avatar
 
 	# Optional
 
