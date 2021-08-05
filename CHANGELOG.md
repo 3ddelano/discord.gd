@@ -4,7 +4,8 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
-Master
+1.0.2
+------
 - Fixed bug where bot crashes if no avatar is set
 - If bot gets ratelimited, it now waits until the message is sent
 
