@@ -24,8 +24,7 @@ var client
 const AVATAR_URL_FORMATS = ['webp', 'png', 'jpg', 'jpeg', 'gif']
 const AVATAR_URL_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048]
 
-
-func get_display_avatar(options: Dictionary = {}) -> PoolByteArray:
+func get_display_avatar_url(options: Dictionary = {}) -> String:
 	"""
 	options {
 		format: String, one of webp, png, jpg, jpeg, gif (default png),
@@ -50,22 +49,30 @@ func get_display_avatar(options: Dictionary = {}) -> PoolByteArray:
 		assert(typeof(options.dynamic) == TYPE_BOOL, 'dynamic attribute must be of type bool in get_display_avatar')
 		_options.dynamic = options.dynamic
 
-	if avatar.length() == 0:
-		return get_default_avatar()
+	if not Helpers.is_valid_str(avatar):
+		return get_default_avatar_url()
 
-	var png_bytes = yield(
-		client._send_get_cdn('/avatars/%s/%s.png?size=%s' % [id, avatar, _options.size]),
-		'completed'
-	)
-	return png_bytes
+	return client._cdn_base + '/avatars/%s/%s.png?size=%s' % [id, avatar, _options.size]
 
-func get_default_avatar() -> ImageTexture:
+
+func get_default_avatar_url() -> String:
 	var moduloed_discriminator = int(discriminator) % 5
+	return client._cdn_base + '/embed/avatars/%s.png' % moduloed_discriminator
+
+
+func get_display_avatar(options: Dictionary = {}) -> PoolByteArray:
 	var png_bytes = yield(
-		client._send_get_cdn('/embed/avatars/%s.png' % moduloed_discriminator),
-		'completed'
+		client._send_get_cdn(get_display_avatar_url(options)), 		'completed'
 	)
 	return png_bytes
+
+
+func get_default_avatar() -> PoolByteArray:
+	var png_bytes = yield(
+		client._send_get_cdn(get_default_avatar_url()), 'completed'
+	)
+	return png_bytes
+
 
 func _init(_client, user):
 	client = _client

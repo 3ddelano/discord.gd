@@ -1,6 +1,7 @@
 # Test scene
 _Main.gd
 _Main.tscn
+_WIKI.md
 project.godot
 icon.png
 icon.png.import
