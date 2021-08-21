@@ -162,7 +162,7 @@ func set_author(
 	return self
 
 
-func add_field(name: String, value: String, inline: bool = false):
+func add_field(name: String, value: String, inline: bool = false, index = -1):
 	assert(Helpers.is_valid_str(name), 'Invalid Type: field name of Embed must be a valid String')
 	assert(Helpers.is_valid_str(value), 'Invalid Type: field value of Embed must be a valid String')
 
@@ -170,7 +170,11 @@ func add_field(name: String, value: String, inline: bool = false):
 	assert(value.length() <= 1024, 'Embed field value must be <= 1024 characters')
 	assert(fields.size() <= 25, 'Embed can have a max of 25 fields')
 
-	fields.append({'name': name, 'value': value, 'inline': inline})
+	var new_field = {'name': name, 'value': value, 'inline': inline}
+	if index == -1:
+		fields.append(new_field)
+	else:
+		fields.insert(index, new_field)
 	return self
 
 
@@ -192,7 +196,8 @@ func slice_fields(index: int, delete_count: int = 1, replace_fields: Array = [])
 			var inline = false
 			if field.size() == 3:
 				inline = field[2]
-			add_field(field[0], field[1], inline)
+			add_field(field[0], field[1], inline, index)
+			index += 1
 
 	return self
 

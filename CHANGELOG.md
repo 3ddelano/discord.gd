@@ -4,6 +4,14 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.0
+------
+### Major Release (Added support for components)
+- Added support for button components
+- Added classes DiscordInteraction, MessageActionRow and MessageButton
+- Added class MessageFlags for Message.flags
+- Fixed a bug where bot would automatically login without calling the .login() method
+
 1.0.3
 ------
 - Added User.get_display_avatar_url()

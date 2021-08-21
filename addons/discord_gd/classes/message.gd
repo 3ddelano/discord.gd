@@ -28,6 +28,7 @@ var mention_channels: Array
 var attachments: Array
 var embeds: Array
 var reactions: Array
+var flags: MessageFlags
 
 var nonce
 
@@ -74,12 +75,15 @@ func _init(message: Dictionary):
 	assert(message.has('author'), 'Message must have an author')
 	# Check if the message is sent by webhook
 	if message.has('webhook_id') and Helpers.is_str(message.webhook_id) and message.webhook_id.length() > 0:
-		# user sent a webhook
-		assert(typeof(message.author) == TYPE_DICTIONARY, 'author attribute of webhook Message must be a Dictionary')
+		# webhook sent a message
+		pass
 	else:
 		# sent by user
 		assert(message.author is User, 'author attribute of Mesage must be of type User')
 	author = message.author
+
+	if message.has('flags'):
+		flags = MessageFlags.new(message.flags)
 
 #	if message.channel.type != 'DM':
 #		assert(message.has('guild_id') and message.guild_id and Helpers.is_valid_str(message.guild_id), 'Message must have a valid guild_id')
@@ -88,8 +92,8 @@ func _init(message: Dictionary):
 	if message.has('guild_id') and message.guild_id:
 		guild_id = message.guild_id
 
-
-	assert(not (message.content == '' and message.embeds.size() == 0 and message.attachments.size() == 0), 'Message must have a content or embed')
+	if not message.has('webhook_id'):
+		assert(message.content.length() > 0 or message.embeds.size() > 0 or message.components.size() > 0 or message.attachments.size() > 0, 'Message must have a content or at least one value in (embeds, components or attachments)')
 	content = message.content
 
 	assert(message.timestamp, 'Message must have a timestamp')
@@ -128,7 +132,6 @@ func _init(message: Dictionary):
 		message_reference = message.message_reference
 	if message.has('referenced_message') and message.referenced_message:
 		referenced_message = message.referenced_message
-
 func _to_string(pretty: bool = false):
 	var data = {
 		'id': id,
@@ -150,7 +153,8 @@ func _to_string(pretty: bool = false):
 		'pinned': pinned,
 		'type': type,
 		'message_reference': message_reference,
-		'referenced_message': referenced_message
+		'referenced_message': referenced_message,
+		'flags': flags.bitfield
 	}
 
 	return JSON.print(data, '\t') if pretty else JSON.print(data)

@@ -28,8 +28,9 @@ signal guild_create(bot, guild) # bot: DiscordBot, guild: Dictionary
 signal guild_delete(bot, guild) # bot: DiscordBot, guild: Dictionary
 signal message_create(bot, message, channel) # bot: DiscordBot, message: Message, channel: Dictionary
 signal message_delete(bot, message) # bot: DiscordBot, message: Dictionary
-
-
+signal interaction_create(bot, interaction) # bot: DiscordBot, interaction: DiscordInteraction
+#signal message_reaction_add(bot, reaction) # bot: DiscordBot, reaction: Dictionary
+#signal message_reaction_remove(bot, reaction) # bot: DiscordBot, reaction: Dictionary
 
 
 
@@ -47,6 +48,7 @@ var _invalid_session_is_resumable: bool
 var _heartbeat_interval: int
 var _heartbeat_ack_received = true
 var _login_error
+var _logged_in = false
 
 # Count of the number of guilds initially loaded
 var guilds_loaded = 0
@@ -65,6 +67,8 @@ var CHANNEL_TYPES = {
 	'13': 'GUILD_STAGE_VOICE'
 }
 
+
+
 var GUILD_ICON_SIZES = [16,32,64,128,256,512,1024,2048]
 
 var ACTIVITY_TYPES = {
@@ -77,13 +81,15 @@ var ACTIVITY_TYPES = {
 
 var PRESENCE_STATUS_TYPES = ['ONLINE', 'DND', 'IDLE', 'INVISIBLE', 'OFFLINE']
 
-
+var INTERACTION_TYPES = {
+	'2': 'APPLICATION_COMMAND',
+	'3': 'MESSAGE_COMPONENT'
+}
 # Public Functions
 func login() -> void:
 	assert(TOKEN.length() > 2, 'ERROR: Unable to login. TOKEN attribute not set.')
 	_headers = ['Authorization: Bot %s' % TOKEN, 'User-Agent: discord.gd (https://github.com/3ddelano/discord.gd)']
 	_login_error = _client.connect_to_url(_gateway_base)
-
 	# No internet?
 	if _login_error == ERR_INVALID_PARAMETER:
 		print('Trying to reconnect in 5s')
@@ -97,7 +103,7 @@ func login() -> void:
 				print('Login Error: Unavailable')
 			FAILED:
 				print('Login Error: Failed (Generic)')
-
+	_logged_in = true
 	return
 
 
@@ -122,6 +128,7 @@ func edit(message: Message, content, options: Dictionary = {}) -> Message:
 func delete(message: Message):
 	var res = yield(_send_message_request(message, '', {}, HTTPClient.METHOD_DELETE), 'completed')
 	return res
+
 
 func start_thread(message: Message, thread_name: String, duration: int = 60 * 24) -> Dictionary:
 	var payload = {
@@ -201,9 +208,16 @@ func set_presence(p_options: Dictionary) -> void:
 
 	_update_presence(new_presence)
 
-
-
-
+# Discord doesn't support URL encoding emojis so this will have to wait
+#func create_reaction(message: Message, emoji: String) -> int:
+#	assert(typeof(emoji) == TYPE_STRING, "Invalid Type: emoji must be a String")
+#	print(emoji.percent_encode())
+#	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s/%%40me" % [message.channel_id, message.id, emoji], HTTPClient.METHOD_PUT, ['Content-Length:0']), "completed")
+#	return status_code
+#
+#func delete_reactions(reaction: Dictionary) -> int:
+#	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions" % [reaction.channel_id, reaction.message_id], HTTPClient.METHOD_DELETE), "completed")
+#	return status_code
 
 # Private Functions
 func _ready() -> void:
@@ -304,7 +318,8 @@ func _process(_delta) -> void:
 		)
 		if is_connected:
 			_client.poll()
-		else:
+
+		elif _logged_in:
 			_client.connect_to_url(_gateway_base)
 
 func _send_heartbeat() -> void: # Send heartbeat OP code 1
@@ -393,8 +408,46 @@ func _handle_events(dict: Dictionary) -> void:
 					return
 
 			d = Message.new(d)
+
 			var channel = channels.get(str(d.channel_id))
 			emit_signal('message_create', self, d, channel)
+
+#		'MESSAGE_REACTION_ADD':
+#			var d = dict.d
+#			emit_signal('message_reaction_add', self, d)
+#
+#		'MESSAGE_REACTION_REMOVE':
+#			var d = dict.d
+#			emit_signal('message_reaction_remove', self, d)
+
+		'INTERACTION_CREATE':
+			var d = dict.d
+			var type = INTERACTION_TYPES[str(d.type)]
+			d.type = type
+
+			var id = d.id
+			var data = d.data
+			var token = d.token
+
+			var payload = {
+				'type': 4,
+				'data': {
+					'content': 'received the response'
+				}
+			}
+			match type:
+				'MESSAGE_COMPONENT':
+					print('got msg component interaction')
+					# user, guild_id, channel_id, data, member
+
+				'APPLICATION_COMMAND':
+					print('got app cmd')
+					# data = id, name, type, resolved, options, target_id?
+			var interaction = DiscordInteraction.new(self, d)
+			emit_signal("interaction_create", self, interaction)
+			# Send an ACK response
+			#_send_request('/interactions/%s/%s/callback' % [id, token], payload)
+
 
 		'MESSAGE_DELETE':
 			var d = dict.d
@@ -414,7 +467,11 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 	body.append_array('--boundary\r\n'.to_utf8())
 	body.append_array('Content-Disposition: form-data; name="payload_json"\r\n'.to_utf8())
 	body.append_array('Content-Type: application/json\r\n\r\n'.to_utf8())
-	body.append_array(JSON.print(payload.payload_json).to_utf8())
+
+	if payload.has('payload_json'):
+		body.append_array(JSON.print(payload.payload_json).to_utf8())
+	elif payload.has('payload'):
+		body.append_array(JSON.print(payload.payload).to_utf8())
 
 	var count = 0
 	for file in payload.files:
@@ -463,6 +520,10 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 				rb = rb + chunk # Append to read buffer.
 
 		var response = _jsonstring_to_dict(rb.get_string_from_utf8())
+		if response == null:
+			if http_client.get_response_code() == 204:
+				return true
+			return false
 		if response.has('code'):
 			print('Response: status code ', str(http_client.get_response_code()))
 			print(JSON.print(response, '\t'))
@@ -498,6 +559,10 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 	assert(data[0] == HTTPRequest.RESULT_SUCCESS, 'Error sending request: HTTP Failed')
 
 	var response = _jsonstring_to_dict(data[3].get_string_from_utf8())
+	if response == null:
+		if data[1] == 204:
+			return true
+		return false
 
 	if response and response.has('code'):
 		# Got an error
@@ -519,24 +584,29 @@ func _get_dm_channel(channel_id: String) -> Dictionary:
 	var data = yield(_send_get('/channels/%s' % channel_id), 'completed')
 	return data
 
-func _send_get(slug) -> Dictionary:
+func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []) -> Dictionary:
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
-#	http_request.use_threads = true
-	http_request.call_deferred('request', _https_base + slug, _headers)
+
+	var headers = _headers + additional_headers
+	http_request.call_deferred('request', _https_base + slug, headers, false, method)
+
 	var data = yield(http_request, 'request_completed')
 	http_request.queue_free()
 
 	assert(data[0] == HTTPRequest.RESULT_SUCCESS)
+	if method == HTTPClient.METHOD_GET:
+		var response = _jsonstring_to_dict(data[3].get_string_from_utf8())
+		if response.has('code'):
+			# Got an error
+			print('GET: status code ', str(data[1]))
+			print('Error sending GET request: ' + JSON.print(response, '\t'))
+		assert(not response.has('code'), 'Error sending GET request. See output window')
 
-	var response = _jsonstring_to_dict(data[3].get_string_from_utf8())
-	if response.has('code'):
-		# Got an error
-		print('GET: status code ', str(data[1]))
-		print('Error sending GET request: ' + JSON.print(response, '\t'))
-	assert(not response.has('code'), 'Error sending GET request. See output window')
+		return response
 
-	return response
+	else: # Maybe a PUT/DELETE for reaction
+		return data[1]
 
 func _send_get_cdn(slug) -> PoolByteArray:
 	var http_request = HTTPRequest.new()
@@ -560,6 +630,7 @@ func _send_message_request(message: Message, content, options := {}, method := H
 		'content': null,
 		'tts': false,
 		'embeds': null,
+		'components': null,
 		'allowed_mentions': null,
 		'message_reference': null
 	}
@@ -593,10 +664,11 @@ func _send_message_request(message: Message, content, options := {}, method := H
 		"""parse the message options - refer https://discord.com/developers/docs/resources/channel#create-message-jsonform-params
 		options {
 			tts: bool,
-			embeds: array,
+			embeds: Array,
+			components: Array,
+			files: Array,
 			allowed_mentions: object,
 			message_reference: object,
-			files: Array
 		}
 		"""
 		if options.has('tts') && options.tts:
@@ -608,6 +680,15 @@ func _send_message_request(message: Message, content, options := {}, method := H
 					if payload.embeds == null:
 						payload.embeds = []
 					payload.embeds.append(embed._to_dict())
+
+		if options.has('components') && options.components.size() > 0:
+			assert(options.components.size() <= 5, 'Message can have a max of 5 MessageActionRow components.')
+			for component in options.components:
+				assert(component is MessageActionRow, 'Parent component must be a MessageActionRow.')
+				if payload.components == null:
+					payload.components = []
+				payload.components.append(component._to_dict())
+
 
 		if options.has('allowed_mentions') && options.allowed_mentions:
 			if typeof(options.allowed_mentions) == TYPE_DICTIONARY:
