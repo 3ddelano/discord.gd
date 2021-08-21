@@ -611,8 +611,12 @@ func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []) ->
 func _send_get_cdn(slug) -> PoolByteArray:
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
-#	http_request.use_threads = true
-	http_request.request(_cdn_base + slug, _headers)
+
+	if slug.find('/') == 0:
+		http_request.request(_cdn_base + slug, _headers)
+	else:
+		http_request.request(slug, _headers)
+
 	var data = yield(http_request, 'request_completed')
 	http_request.queue_free()
 

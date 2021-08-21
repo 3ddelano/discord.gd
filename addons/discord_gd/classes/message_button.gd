@@ -10,7 +10,7 @@ var url: String setget set_url, get_url
 var disabled: bool = false setget set_disabled, get_disabled
 #var emoji: String
 
-var _style: int setget set_style, get_style
+var _style setget set_style, get_style
 var type: int = 2
 
 

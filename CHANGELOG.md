@@ -4,6 +4,12 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.1
+------
+- Fixed User.get_display_avatar() was not returning PoolByteArray
+- Fixed User.get_default_avatar() was not returning PoolByteArray
+
+
 1.1.0
 ------
 ### Major Release (Added support for components)

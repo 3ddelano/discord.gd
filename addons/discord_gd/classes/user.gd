@@ -62,7 +62,7 @@ func get_default_avatar_url() -> String:
 
 func get_display_avatar(options: Dictionary = {}) -> PoolByteArray:
 	var png_bytes = yield(
-		client._send_get_cdn(get_display_avatar_url(options)), 		'completed'
+		client._send_get_cdn(get_display_avatar_url(options)), 'completed'
 	)
 	return png_bytes
 
