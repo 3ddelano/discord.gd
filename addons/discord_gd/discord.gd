@@ -69,7 +69,7 @@ var CHANNEL_TYPES = {
 
 
 
-var GUILD_ICON_SIZES = [16,32,64,128,256,512,1024,2048]
+var GUILD_ICON_SIZES = [16,32,64,128,256,512,1024,2048,4096]
 
 var ACTIVITY_TYPES = {
 	'GAME': 0,
@@ -435,14 +435,7 @@ func _handle_events(dict: Dictionary) -> void:
 					'content': 'received the response'
 				}
 			}
-			match type:
-				'MESSAGE_COMPONENT':
-					print('got msg component interaction')
-					# user, guild_id, channel_id, data, member
 
-				'APPLICATION_COMMAND':
-					print('got app cmd')
-					# data = id, name, type, resolved, options, target_id?
 			var interaction = DiscordInteraction.new(self, d)
 			emit_signal("interaction_create", self, interaction)
 			# Send an ACK response
@@ -655,11 +648,10 @@ func _send_message_request(message: Message, content, options := {}, method := H
 
 	# Check if the content is only a string
 	if typeof(content) == TYPE_STRING and content.length() > 0:
-		assert(content.length() < 2048, 'Message content must be less than 2048 characters')
+		assert(content.length() <= 2048, 'Message content must be less than 2048 characters')
 		payload.content = content
 
-	# Check if the content is the options dictionary
-	elif typeof(content) == TYPE_DICTIONARY:
+	elif typeof(content) == TYPE_DICTIONARY: # Check if the content is the options dictionary
 		options = content
 		content = null
 
@@ -675,17 +667,22 @@ func _send_message_request(message: Message, content, options := {}, method := H
 			message_reference: object,
 		}
 		"""
-		if options.has('tts') && options.tts:
+
+		if options.has('content') and Helpers.is_str(options.content):
+			assert(options.content.length() <= 2048, 'Message content must be less than 2048 characters')
+			payload.content = options.content
+
+		if options.has('tts') and options.tts:
 			payload.tts = true
 
-		if options.has('embeds') && options.embeds.size() > 0:
+		if options.has('embeds') and options.embeds.size() > 0:
 			for embed in options.embeds:
 				if embed is Embed:
 					if payload.embeds == null:
 						payload.embeds = []
 					payload.embeds.append(embed._to_dict())
 
-		if options.has('components') && options.components.size() > 0:
+		if options.has('components') and options.components.size() > 0:
 			assert(options.components.size() <= 5, 'Message can have a max of 5 MessageActionRow components.')
 			for component in options.components:
 				assert(component is MessageActionRow, 'Parent component must be a MessageActionRow.')
@@ -694,7 +691,7 @@ func _send_message_request(message: Message, content, options := {}, method := H
 				payload.components.append(component._to_dict())
 
 
-		if options.has('allowed_mentions') && options.allowed_mentions:
+		if options.has('allowed_mentions') and options.allowed_mentions:
 			if typeof(options.allowed_mentions) == TYPE_DICTIONARY:
 				"""
 				allowedMentions {
@@ -706,7 +703,7 @@ func _send_message_request(message: Message, content, options := {}, method := H
 				"""
 				payload.allowed_mentions = options.allowed_mentions
 
-		if options.has('message_reference') && options.message_reference:
+		if options.has('message_reference') and options.message_reference:
 			"""
 			message_reference {
 				message_id: id of originating msg,

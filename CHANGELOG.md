@@ -4,11 +4,19 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.2
+------
+- Added support for 4096 size in `DiscordBot.get_guild_icon()`
+- Added support for 4096 size in `User.get_display_avatar()`
+- Fixed dynamic option in `User.get_display_avatar()`
+- Fixed a bug where `Message` did not store components.
+- Added `DiscordInteraction.delete_follow_up(message: Message)` to delete a sent follow up message.
+- Certain functions now use `push_error()` instead of `assert()` so that the program doesn't stop is an error occurs.
+
 1.1.1
 ------
 - Fixed User.get_display_avatar() was not returning PoolByteArray
 - Fixed User.get_default_avatar() was not returning PoolByteArray
-
 
 1.1.0
 ------

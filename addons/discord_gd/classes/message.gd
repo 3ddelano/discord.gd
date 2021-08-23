@@ -26,6 +26,7 @@ var mentions: Array
 var mention_roles: Array
 var mention_channels: Array
 var attachments: Array
+var components: Array
 var embeds: Array
 var reactions: Array
 var flags: MessageFlags
@@ -92,8 +93,8 @@ func _init(message: Dictionary):
 	if message.has('guild_id') and message.guild_id:
 		guild_id = message.guild_id
 
-	if not message.has('webhook_id'):
-		assert(message.content.length() > 0 or message.embeds.size() > 0 or message.components.size() > 0 or message.attachments.size() > 0, 'Message must have a content or at least one value in (embeds, components or attachments)')
+	#if not message.has('webhook_id'):
+		#assert(message.content.length() > 0 or message.embeds.size() > 0 or message.components.size() > 0 or message.attachments.size() > 0, 'Message must have a content or at least one of (embeds, components or attachments)')
 	content = message.content
 
 	assert(message.timestamp, 'Message must have a timestamp')
@@ -122,6 +123,8 @@ func _init(message: Dictionary):
 		mention_channels = message.mention_channels
 	if message.has('attachments') and message.attachments:
 		attachments = message.attachments
+	if message.has('components') and message.components:
+		components = message.components
 	if message.has('embeds') and message.embeds:
 		embeds = message.embeds
 	if message.has('reactions') and message.reactions:
@@ -148,6 +151,7 @@ func _to_string(pretty: bool = false):
 		'mention_roles': mention_roles,
 		'mention_channels': mention_channels,
 		'attachments': attachments,
+		'components': components,
 		'embeds': embeds,
 		'reactions': reactions,
 		'pinned': pinned,

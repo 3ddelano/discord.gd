@@ -22,7 +22,7 @@ var public_flags: int
 var client
 
 const AVATAR_URL_FORMATS = ['webp', 'png', 'jpg', 'jpeg', 'gif']
-const AVATAR_URL_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048]
+const AVATAR_URL_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
 func get_display_avatar_url(options: Dictionary = {}) -> String:
 	"""
@@ -32,27 +32,28 @@ func get_display_avatar_url(options: Dictionary = {}) -> String:
 		dynamic: bool, if true the format will automatically change to gif for animated avatars (default false)
 	}
 	"""
-	var _options = {
-		'size': 256,
-		'format': 'png',
-		'dynamic': false
-	}
+
 	if options.has('format'):
 		assert(options.format in AVATAR_URL_FORMATS, 'Invalid avatar_url provided to get_display_avatar')
-		_options.format = options.format
+	else:
+		options.format = 'png'
 
 	if options.has('size'):
 		assert(int(options.size) in AVATAR_URL_SIZES, 'Invalid size provided to get_display_avatar')
-		_options.size = int(options.size)
+	else:
+		options.size = 256
 
 	if options.has('dynamic'):
 		assert(typeof(options.dynamic) == TYPE_BOOL, 'dynamic attribute must be of type bool in get_display_avatar')
-		_options.dynamic = options.dynamic
+		if Helpers.is_valid_str(avatar) and avatar.begins_with('a_'):
+			options.format = 'gif'
+	else:
+		options.dynamic = false
 
 	if not Helpers.is_valid_str(avatar):
 		return get_default_avatar_url()
 
-	return client._cdn_base + '/avatars/%s/%s.png?size=%s' % [id, avatar, _options.size]
+	return client._cdn_base + '/avatars/%s/%s.%s?size=%s' % [id, avatar, options.format, options.size]
 
 
 func get_default_avatar_url() -> String:

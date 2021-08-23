@@ -44,12 +44,25 @@ func in_guild() -> bool:
 
 func fetch_reply(message_id: String = '@original'):
 	#assert(not ephemeral, 'Unable to fetch ephemeral Interaction reply.')
-	return yield(_fetch_message(message_id), 'completed')
+	if ephemeral:
+		push_error('Unable to fetch ephemeral reply.')
+		return yield()
+
+	var msg = yield(
+		bot._send_get('/webhooks/%s/%s/messages/%s' % [application_id, token, message_id]),
+		'completed'
+	)
+	var coroutine = bot._parse_message(msg)
+	if typeof(coroutine) == TYPE_OBJECT:
+		coroutine = yield(coroutine, 'completed')
+
+	return Message.new(msg)
 
 
 func reply(options: Dictionary):
-	assert(not (replied or deferred), 'Already replied to Interaction.')
-	#assert(not(options.fetch_reply and options.ephemeral), 'Unable to fetch reply of ephemeral Interaction.')
+	if replied or deferred:
+		push_error('Already replied to Interaction.')
+		return yield()
 
 	options.type = RESPONSE_TYPES['CHANNEL_MESSAGE_WITH_SOURCE']
 	var res = yield(
@@ -61,20 +74,27 @@ func reply(options: Dictionary):
 
 
 func edit_reply(options: Dictionary):
-	assert(deferred or replied, 'Unable to edit Interaction. Not replied.')
+	if (not replied) and (not deferred):
+		push_error('Unable to edit Interaction. Not replied.')
+		return yield()
+
 	var res = yield(_edit_message('@original', options), 'completed')
 	replied = true
 	return res
 
 
 func delete_reply():
-	assert(not ephemeral, 'Unable to delete Interaction reply.')
+	if ephemeral:
+		push_error('Unable to delete ephemeral Interaction reply.')
+		return yield()
+
 	return yield(_delete_message(), 'completed')
 
 
 func defer_reply(options: Dictionary = {}):
-	assert(not (replied or deferred), 'Already replied to Interaction.')
-	#assert(not(options.fetch_reply and options.ephemeral), 'Unable to fetch reply of ephemeral Interaction.')
+	if replied or deferred:
+		push_error('Already replied to Interaction.')
+		return yield()
 
 	options.type = RESPONSE_TYPES['DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE']
 	var res = yield(
@@ -87,6 +107,8 @@ func defer_reply(options: Dictionary = {}):
 func update(options: Dictionary):
 	if replied or deferred:
 		push_error('Already replied to Interaction.')
+		return yield()
+
 	options.type = RESPONSE_TYPES['UPDATE_MESSAGE']
 	var msg = yield(
 		_send_request('/interactions/%s/%s/callback' % [id, token], options), 'completed'
@@ -96,8 +118,9 @@ func update(options: Dictionary):
 
 
 func defer_update(options: Dictionary = {}):
-	assert(not (replied or deferred), 'Already replied to Interaction.')
-	#assert(not(options.fetch_reply and options.ephemeral), 'Unable to fetch reply of ephemeral Interaction.')
+	if replied or deferred:
+		push_error('Already replied to Interaction.')
+		return yield()
 
 	options.type = RESPONSE_TYPES['DEFERRED_UPDATE_MESSAGE']
 	var res = yield(
@@ -125,20 +148,9 @@ func edit_follow_up(msg: Message, options: Dictionary):
 	var res = yield(_edit_message(msg.id, options), 'completed')
 	return res
 
-
-func _fetch_message(message_id: String = '@original'):
-	var msg = yield(
-		bot._send_get('/webhooks/%s/%s/messages/%s' % [application_id, token, message_id]),
-		'completed'
-	)
-	var coroutine = bot._parse_message(msg)
-	if typeof(coroutine) == TYPE_OBJECT:
-		coroutine = yield(coroutine, 'completed')
-
-	var ret = Message.new(msg)
-	message = ret
-	return ret
-
+func delete_follow_up(msg: Message):
+	var res = yield(_delete_message(msg.id), 'completed')
+	return res
 
 func _delete_message(message_id: String = '@original'):
 	var res = yield(
@@ -148,7 +160,7 @@ func _delete_message(message_id: String = '@original'):
 		),
 		'completed'
 	)
-
+	return res
 
 func _edit_message(message_id: String, options: Dictionary):
 	options.type = RESPONSE_TYPES['CHANNEL_MESSAGE_WITH_SOURCE']
@@ -188,12 +200,18 @@ func _send_request(
 	var _embeds = []
 	if options.has('embeds') and options.embeds.size() > 0:
 		for embed in options.embeds:
-			_embeds.append(embed._to_dict())
+			if typeof(embed) == TYPE_DICTIONARY:
+				_embeds.append(embed)
+			else:
+				_embeds.append(embed._to_dict())
 
 	var _components = []
 	if options.has('components') and options.components.size() > 0:
 		for component in options.components:
-			_components.append(component._to_dict())
+			if typeof(component) == TYPE_DICTIONARY:
+				_components.append(component)
+			else:
+				_components.append(component._to_dict())
 
 	var payload = {
 		'type': _type,
