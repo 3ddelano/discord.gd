@@ -472,19 +472,19 @@ func permissions_in(channel_id: String):
 func permissions_for(user_id: String, channel_id: String):
 	# Permissions for a user in a channel
 	if not channels.has(channel_id):
-        push_error('Channel with the id' + channel_id + ' not found.')
-		return Permissions.new().ALL
+		push_error('Channel with the id' + channel_id + ' not found.')
+		return Permissions.new(Permissions.new().ALL)
 
 	var channel = channels[channel_id]
 	var guild = guilds[channel.guild_id]
 
 	# Check for guild owner
 	if user_id == guild.owner_id:
-		return Permissions.new().ALL
+		return Permissions.new(Permissions.new().ALL)
 
 	# @everyone base role
 	var permissions = Permissions.new(guild.roles[guild.id].permissions)
-
+	print(permissions is Permissions)
 	if not guild.members.has(user_id):
 		push_warning("Member not found in cached members. Make sure the GUILD_MEMBERS intent is setup.")
 		return permissions
@@ -496,7 +496,7 @@ func permissions_for(user_id: String, channel_id: String):
 		permissions.add(guild.roles[role_id].permissions)
 
 	if permissions.has('ADMINISTRATOR'):
-		return Permissions.new().ALL
+		return Permissions.new(Permissions.new().ALL)
 
 	var overwrites = channel.permission_overwrites
 
