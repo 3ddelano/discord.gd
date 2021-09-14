@@ -93,10 +93,10 @@ func resolve(bit):
 		return ret
 
 	if (Helpers.is_valid_str(bit)):
-		if (FLAGS[bit]):
+		if (FLAGS.has(bit)):
 			return FLAGS[bit]
 
-		if (not bit.is_nan()):
+		if (not is_nan(float(bit))):
 			return int(bit)
 
 	assert(false, 'Bitfield is invalid.')

@@ -4,6 +4,12 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.3
+------
+- Updated `DiscordBot.send` to accept the channel_id or a `Message`
+- Added `DiscordBot.permissions_in()` to get bot permissions in a channel
+- Added `DiscordBot.permissions_for()` to get permmissions for a specific user (currently only Bot works)
+  
 1.1.2
 ------
 - Added support for 4096 size in `DiscordBot.get_guild_icon()`
@@ -46,5 +52,4 @@ For a more detailed list of past and incoming changes, see the commit history.
 
 1.0.0
 ------
-
 - Initial version

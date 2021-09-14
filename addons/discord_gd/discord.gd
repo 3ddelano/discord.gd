@@ -13,7 +13,6 @@ var TOKEN: String
 var VERBOSE: bool = false
 var INTENTS: int = 513
 
-
 # Caches
 var user: User
 var application: Dictionary
@@ -21,18 +20,15 @@ var guilds = {}
 var channels = {}
 var users = {}
 
-
 # Signals
-signal bot_ready(bot) # bot: DiscordBot
-signal guild_create(bot, guild) # bot: DiscordBot, guild: Dictionary
-signal guild_delete(bot, guild) # bot: DiscordBot, guild: Dictionary
-signal message_create(bot, message, channel) # bot: DiscordBot, message: Message, channel: Dictionary
-signal message_delete(bot, message) # bot: DiscordBot, message: Dictionary
-signal interaction_create(bot, interaction) # bot: DiscordBot, interaction: DiscordInteraction
+signal bot_ready(bot)  # bot: DiscordBot
+signal guild_create(bot, guild)  # bot: DiscordBot, guild: Dictionary
+signal guild_delete(bot, guild)  # bot: DiscordBot, guild: Dictionary
+signal message_create(bot, message, channel)  # bot: DiscordBot, message: Message, channel: Dictionary
+signal message_delete(bot, message)  # bot: DiscordBot, message: Dictionary
+signal interaction_create(bot, interaction)  # bot: DiscordBot, interaction: DiscordInteraction
 #signal message_reaction_add(bot, reaction) # bot: DiscordBot, reaction: Dictionary
 #signal message_reaction_remove(bot, reaction) # bot: DiscordBot, reaction: Dictionary
-
-
 
 # Private Variables
 var _gateway_base = 'wss://gateway.discord.gg/?v=9&encoding=json'
@@ -67,28 +63,21 @@ var CHANNEL_TYPES = {
 	'13': 'GUILD_STAGE_VOICE'
 }
 
+var GUILD_ICON_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
-
-var GUILD_ICON_SIZES = [16,32,64,128,256,512,1024,2048,4096]
-
-var ACTIVITY_TYPES = {
-	'GAME': 0,
-	'STREAMING': 1,
-	'LISTENING': 2,
-	'WATCHING': 3,
-	'COMPETING': 5
-}
+var ACTIVITY_TYPES = {'GAME': 0, 'STREAMING': 1, 'LISTENING': 2, 'WATCHING': 3, 'COMPETING': 5}
 
 var PRESENCE_STATUS_TYPES = ['ONLINE', 'DND', 'IDLE', 'INVISIBLE', 'OFFLINE']
 
-var INTERACTION_TYPES = {
-	'2': 'APPLICATION_COMMAND',
-	'3': 'MESSAGE_COMPONENT'
-}
+var INTERACTION_TYPES = {'2': 'APPLICATION_COMMAND', '3': 'MESSAGE_COMPONENT'}
+
 # Public Functions
 func login() -> void:
 	assert(TOKEN.length() > 2, 'ERROR: Unable to login. TOKEN attribute not set.')
-	_headers = ['Authorization: Bot %s' % TOKEN, 'User-Agent: discord.gd (https://github.com/3ddelano/discord.gd)']
+	_headers = [
+		'Authorization: Bot %s' % TOKEN,
+		'User-Agent: discord.gd (https://github.com/3ddelano/discord.gd)'
+	]
 	_login_error = _client.connect_to_url(_gateway_base)
 	# No internet?
 	if _login_error == ERR_INVALID_PARAMETER:
@@ -107,21 +96,22 @@ func login() -> void:
 	return
 
 
-func send(message: Message, content, options: Dictionary = {}) -> Message:
-	var res = yield(_send_message_request(message, content, options), 'completed')
+func send(messageorchannelid, content, options: Dictionary = {}) -> Message:
+	# channel
+	var res = yield(_send_message_request(messageorchannelid, content, options), 'completed')
 	return res
 
 
 func reply(message: Message, content, options: Dictionary = {}) -> Message:
-	options.message_reference = {
-		'message_id': message.id
-	}
+	options.message_reference = {'message_id': message.id}
 	var res = yield(_send_message_request(message, content, options), 'completed')
 	return res
 
 
 func edit(message: Message, content, options: Dictionary = {}) -> Message:
-	var res = yield(_send_message_request(message, content, options, HTTPClient.METHOD_PATCH), 'completed')
+	var res = yield(
+		_send_message_request(message, content, options, HTTPClient.METHOD_PATCH), 'completed'
+	)
 	return res
 
 
@@ -131,11 +121,13 @@ func delete(message: Message):
 
 
 func start_thread(message: Message, thread_name: String, duration: int = 60 * 24) -> Dictionary:
-	var payload = {
-		'name': thread_name,
-		'auto_archive_duration': duration
-	}
-	var res = yield(_send_request('/channels/%s/messages/%s/threads' % [message.channel_id, message.id], payload), 'completed')
+	var payload = {'name': thread_name, 'auto_archive_duration': duration}
+	var res = yield(
+		_send_request(
+			'/channels/%s/messages/%s/threads' % [message.channel_id, message.id], payload
+		),
+		'completed'
+	)
 
 	return res
 
@@ -152,8 +144,7 @@ func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 		assert(size in GUILD_ICON_SIZES, 'Invalid size for guild icon provided')
 
 	var png_bytes = yield(
-		_send_get_cdn('/icons/%s/%s.png?size=%s' % [guild.id, guild.icon, size]),
-		'completed'
+		_send_get_cdn('/icons/%s/%s.png?size=%s' % [guild.id, guild.icon, size]), 'completed'
 	)
 	return png_bytes
 
@@ -173,17 +164,19 @@ func set_presence(p_options: Dictionary) -> void:
 		}
 	"""
 
-	var new_presence = {
-		'status': 'online',
-		'afk': false,
-		'activity': {}
-	}
+	var new_presence = {'status': 'online', 'afk': false, 'activity': {}}
 
 	assert(p_options, 'Missing options for set_presence')
-	assert(typeof(p_options) == TYPE_DICTIONARY, 'Invalid Type: options in set_presence must be a Dictionary')
+	assert(
+		typeof(p_options) == TYPE_DICTIONARY,
+		'Invalid Type: options in set_presence must be a Dictionary'
+	)
 
 	if p_options.has('status') and Helpers.is_valid_str(p_options.status):
-		assert(str(p_options.status).to_upper() in PRESENCE_STATUS_TYPES, 'Invalid Type: status must be one of PRESENCE_STATUS_TYPES')
+		assert(
+			str(p_options.status).to_upper() in PRESENCE_STATUS_TYPES,
+			'Invalid Type: status must be one of PRESENCE_STATUS_TYPES'
+		)
 		new_presence.status = p_options.status.to_lower()
 	if p_options.has('afk') and typeof(p_options.afk) == TYPE_BOOL:
 		new_presence.afk = p_options.afk
@@ -202,11 +195,14 @@ func set_presence(p_options: Dictionary) -> void:
 			new_presence.activity.created_at = OS.get_unix_time() * 1000
 
 		if p_options.activity.has('type') and Helpers.is_valid_str(p_options.activity.type):
-			assert(str(p_options.activity.type).to_upper() in ACTIVITY_TYPES, 'Invalid Type: type must be one of ACTIVITY_TYPES')
+			assert(
+				str(p_options.activity.type).to_upper() in ACTIVITY_TYPES,
+				'Invalid Type: type must be one of ACTIVITY_TYPES'
+			)
 			new_presence.activity.type = ACTIVITY_TYPES[str(p_options.activity.type).to_upper()]
 
-
 	_update_presence(new_presence)
+
 
 # Discord doesn't support URL encoding emojis so this will have to wait
 #func create_reaction(message: Message, emoji: String) -> int:
@@ -218,6 +214,7 @@ func set_presence(p_options: Dictionary) -> void:
 #func delete_reactions(reaction: Dictionary) -> int:
 #	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions" % [reaction.channel_id, reaction.message_id], HTTPClient.METHOD_DELETE), "completed")
 #	return status_code
+
 
 # Private Functions
 func _ready() -> void:
@@ -235,6 +232,7 @@ func _ready() -> void:
 
 	$HeartbeatTimer.connect('timeout', self, '_send_heartbeat')
 
+
 func _generate_timer_nodes() -> void:
 	var heart_beat_timer = Timer.new()
 	heart_beat_timer.name = 'HeartbeatTimer'
@@ -244,6 +242,7 @@ func _generate_timer_nodes() -> void:
 	invalid_session_timer.name = 'InvalidSessionTimer'
 	add_child(invalid_session_timer)
 
+
 func _connection_closed(was_clean_close: bool) -> void:
 	if was_clean_close:
 		if VERBOSE:
@@ -252,21 +251,23 @@ func _connection_closed(was_clean_close: bool) -> void:
 		if VERBOSE:
 			print('WSS connection closed unexpectedly')
 
+
 func _connection_error() -> void:
 	if VERBOSE:
 		print('WSS connection error')
+
 
 func _connection_established(protocol: String) -> void:
 	if VERBOSE:
 		print('Connected with protocol: ', protocol)
 
+
 func _data_received() -> void:
 	var packet := _client.get_peer(1).get_packet()
 	var data := packet.get_string_from_utf8()
-
 	var dict = _jsonstring_to_dict(data)
-	var op = str(dict.op) # OP Code Received
-	var d = dict.d # Data Received
+	var op = str(dict.op)  # OP Code Received
+	var d = dict.d  # Data Received
 
 	match op:
 		'10':
@@ -284,11 +285,8 @@ func _data_received() -> void:
 				response_d['d'] = {
 					'token': TOKEN,
 					'intents': INTENTS,
-					'properties': {
-						'$os': 'linux',
-						'$browser': 'discord.gd',
-						'$device': 'discord.gd'
-					}
+					'properties':
+					{'$os': 'linux', '$browser': 'discord.gd', '$device': 'discord.gd'}
 				}
 
 			_send_dict_wss(response_d)
@@ -308,6 +306,7 @@ func _data_received() -> void:
 			# Event Dispatched
 			_handle_events(dict)
 
+
 func _process(_delta) -> void:
 	# Run only when in game and not in the editor
 	if not Engine.is_editor_hint():
@@ -322,7 +321,8 @@ func _process(_delta) -> void:
 		elif _logged_in:
 			_client.connect_to_url(_gateway_base)
 
-func _send_heartbeat() -> void: # Send heartbeat OP code 1
+
+func _send_heartbeat() -> void:  # Send heartbeat OP code 1
 	if not _heartbeat_ack_received:
 		_client.disconnect_from_host(1002)
 		return
@@ -332,6 +332,7 @@ func _send_heartbeat() -> void: # Send heartbeat OP code 1
 	_heartbeat_ack_received = false
 	if VERBOSE:
 		print('Heartbeat sent!')
+
 
 func _handle_events(dict: Dictionary) -> void:
 	_last_seq = dict.s
@@ -353,13 +354,14 @@ func _handle_events(dict: Dictionary) -> void:
 			for guild in _guilds:
 				guilds[guild.id] = guild
 
-
-			# bot_ready is emitted after guilds are loaded
-			#emit_signal('bot_ready', self)
-
 		'GUILD_CREATE':
 			var guild = dict.d
 			_clean_guilds([guild])
+			# update number of cached guilds
+			if guild.has('lazy') and guild.lazy:
+				guilds_loaded += 1
+				if guilds_loaded == guilds.size():
+					emit_signal('bot_ready', self)
 
 			if not guilds.has(guild.id):
 				# Joined a new guild
@@ -368,21 +370,45 @@ func _handle_events(dict: Dictionary) -> void:
 			# update cache
 			guilds[guild.id] = guild
 
-			# update number of cached guilds
-			if guild.has('lazy') and guild.lazy:
-				guilds_loaded += 1
-				if guilds_loaded == guilds.size():
-					emit_signal('bot_ready', self)
-
-			for channel in guild.channels:
-				_clean_channel(channel)
-				channel.guild_id = guild.id
-				channels[channel.id] = channel
-
 		'GUILD_DELETE':
 			var guild = dict.d
 			guilds.erase(guild.id)
 			emit_signal('guild_delete', self, guild.id)
+
+		# 'GUILD_MEMBER_ADD':
+		# 	print('-----------guild member add')
+		# 	var member = dict.d
+		# 	print(member)
+
+		# 'GUILD_MEMBER_UPDATE':
+		# 	print('--------guild_member update')
+		# 	var data = dict.d
+
+		# 	var guild = guilds[data.guild_id]
+		# 	data.erase("guild_id")
+
+		# 	# Update users cache
+		# 	var user = data.user
+		# 	var user_id =  user.id
+		# 	data.erase("user")
+		# 	users[user_id] = user
+
+		# 	if data.has('pending'):
+		# 		var pending = data.pending
+		# 		data.erase('pending')
+		# 		data.is_pending = pending
+		# 	guild.members[user_id] = data
+
+		# 'GUILD_MEMBER_DELETE':
+		# 	print('-----------guild member delete')
+		# 	var member = dict.d
+		# 	print(member)
+
+		# 'GUILD_MEMBERS_CHUNK':
+		# 	print('-----------guild member chunk')
+		# 	var member = dict.d
+		# 	print(member)
+
 
 		'RESUMED':
 			if VERBOSE:
@@ -412,6 +438,10 @@ func _handle_events(dict: Dictionary) -> void:
 			var channel = channels.get(str(d.channel_id))
 			emit_signal('message_create', self, d, channel)
 
+		'MESSAGE_DELETE':
+			var d = dict.d
+			emit_signal('message_delete', self, d)
+
 #		'MESSAGE_REACTION_ADD':
 #			var d = dict.d
 #			emit_signal('message_reaction_add', self, d)
@@ -429,22 +459,70 @@ func _handle_events(dict: Dictionary) -> void:
 			var data = d.data
 			var token = d.token
 
-			var payload = {
-				'type': 4,
-				'data': {
-					'content': 'received the response'
-				}
-			}
+			var payload = {'type': 4, 'data': {'content': 'received the response'}}
 
 			var interaction = DiscordInteraction.new(self, d)
 			emit_signal("interaction_create", self, interaction)
-			# Send an ACK response
-			#_send_request('/interactions/%s/%s/callback' % [id, token], payload)
 
 
-		'MESSAGE_DELETE':
-			var d = dict.d
-			emit_signal('message_delete', self, d)
+func permissions_in(channel_id: String):
+	# Permissions for the bot in a channel
+	return permissions_for(user.id, channel_id)
+
+func permissions_for(user_id: String, channel_id: String):
+	# Permissions for a user in a channel
+	if not channels.has(channel_id):
+        push_error('Channel with the id' + channel_id + ' not found.')
+		return Permissions.new().ALL
+
+	var channel = channels[channel_id]
+	var guild = guilds[channel.guild_id]
+
+	# Check for guild owner
+	if user_id == guild.owner_id:
+		return Permissions.new().ALL
+
+	# @everyone base role
+	var permissions = Permissions.new(guild.roles[guild.id].permissions)
+
+	if not guild.members.has(user_id):
+		push_warning("Member not found in cached members. Make sure the GUILD_MEMBERS intent is setup.")
+		return permissions
+
+	var role_ids = guild.members[user_id].roles
+
+	# Apply member global roles
+	for role_id in role_ids:
+		permissions.add(guild.roles[role_id].permissions)
+
+	if permissions.has('ADMINISTRATOR'):
+		return Permissions.new().ALL
+
+	var overwrites = channel.permission_overwrites
+
+	# Apply @everyone overwrite
+	for overwrite in overwrites:
+		if overwrite.id == guild.id:
+			permissions.remove(overwrite.deny)
+			permissions.add(overwrite.allow)
+			break
+
+	# Apply member roles overwrite
+	for overwrite in overwrites:
+		if overwrite.id in role_ids:
+			permissions.remove(overwrite.deny)
+	for overwrite in overwrites:
+		if overwrite.id in role_ids:
+			permissions.add(overwrite.allow)
+
+	# Apply user overwrite
+	for overwrite in overwrites:
+		if overwrite.id == user_id:
+			permissions.remove(overwrite.deny)
+			permissions.add(overwrite.allow)
+			break
+
+	return permissions
 
 func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD_POST):
 	var headers = _headers.duplicate(true)
@@ -474,7 +552,9 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 		var data = file.data
 		# Add the file to the form
 		body.append_array('\r\n--boundary\r\n'.to_utf8())
-		body.append_array(('Content-Disposition: form-data; name="file' + str(count) + '"; filename="'+ file_name +'"').to_utf8())
+		body.append_array(
+			('Content-Disposition: form-data; name="file' + str(count) + '"; filename="' + file_name + '"').to_utf8()
+		)
 		body.append_array(('\r\nContent-Type: ' + media_type + '\r\n\r\n').to_utf8())
 		body.append_array(data)
 		count += 1
@@ -484,11 +564,17 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 	var err = http_client.connect_to_host(_https_domain, -1, true, false)
 	assert(err == OK, 'Error connecting to Discord HTTPS server')
 
-	while http_client.get_status() == HTTPClient.STATUS_CONNECTING or http_client.get_status() == HTTPClient.STATUS_RESOLVING:
+	while (
+		http_client.get_status() == HTTPClient.STATUS_CONNECTING
+		or http_client.get_status() == HTTPClient.STATUS_RESOLVING
+	):
 		http_client.poll()
 		yield(get_tree(), 'idle_frame')
 
-	assert(http_client.get_status() == HTTPClient.STATUS_CONNECTED, 'Could not connect to Discord HTTPS server')
+	assert(
+		http_client.get_status() == HTTPClient.STATUS_CONNECTED,
+		'Could not connect to Discord HTTPS server'
+	)
 	err = http_client.request_raw(method, _api_slug + slug, headers, body)
 
 	while http_client.get_status() == HTTPClient.STATUS_REQUESTING:
@@ -496,7 +582,12 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 		yield(get_tree(), 'idle_frame')
 
 	# Request is made, now extract the reponse body
-	assert(http_client.get_status() == HTTPClient.STATUS_BODY or http_client.get_status() == HTTPClient.STATUS_CONNECTED)
+	assert(
+		(
+			http_client.get_status() == HTTPClient.STATUS_BODY
+			or http_client.get_status() == HTTPClient.STATUS_CONNECTED
+		)
+	)
 
 	if http_client.has_response():
 		headers = http_client.get_response_headers_as_dictionary()
@@ -510,7 +601,7 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 				# Got nothing, wait for buffers to fill a bit.
 				OS.delay_usec(1000)
 			else:
-				rb = rb + chunk # Append to read buffer.
+				rb = rb + chunk  # Append to read buffer.
 
 		var response = _jsonstring_to_dict(rb.get_string_from_utf8())
 		if response == null:
@@ -523,7 +614,6 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 
 		assert(not response.has('code'), 'Error sending request. See output window')
 
-
 		if response.has('retry_after'):
 			# We got ratelimited
 			yield(get_tree().create_timer(int(response.retry_after)), 'timeout')
@@ -532,6 +622,7 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 		return response
 	else:
 		assert(false, 'Unable to upload file. Got empty response from server')
+
 
 func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD_POST):
 	var headers = _headers.duplicate(true)
@@ -543,7 +634,9 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
 
-	http_request.call_deferred('request', _https_base + slug, headers, false, method, JSON.print(payload))
+	http_request.call_deferred(
+		'request', _https_base + slug, headers, false, method, JSON.print(payload)
+	)
 
 	var data = yield(http_request, 'request_completed')
 	http_request.queue_free()
@@ -572,10 +665,12 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 
 	return response
 
+
 func _get_dm_channel(channel_id: String) -> Dictionary:
 	assert(Helpers.is_valid_str(channel_id), 'Invalid Type: channel_id must be a valid String')
 	var data = yield(_send_get('/channels/%s' % channel_id), 'completed')
 	return data
+
 
 func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []) -> Dictionary:
 	var http_request = HTTPRequest.new()
@@ -598,8 +693,9 @@ func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []) ->
 
 		return response
 
-	else: # Maybe a PUT/DELETE for reaction
+	else:  # Maybe a PUT/DELETE for reaction
 		return data[1]
+
 
 func _send_get_cdn(slug) -> PoolByteArray:
 	var http_request = HTTPRequest.new()
@@ -622,7 +718,10 @@ func _send_get_cdn(slug) -> PoolByteArray:
 
 	return data[3]
 
-func _send_message_request(message: Message, content, options := {}, method := HTTPClient.METHOD_POST):
+
+func _send_message_request(
+	messageorchannelid, content, options := {}, method := HTTPClient.METHOD_POST
+):
 	var payload = {
 		'content': null,
 		'tts': false,
@@ -632,26 +731,33 @@ func _send_message_request(message: Message, content, options := {}, method := H
 		'message_reference': null
 	}
 
-	var slug = '/channels/%s/messages' % str(message.channel_id)
+	var slug# = '/channels/%s/messages' % str(message.channel_id)
+	if messageorchannelid is Message:
+		slug ='/channels/%s/messages' % str(messageorchannelid.channel_id)
+	else:
+		assert(messageorchannelid.length() > 16, "channel_id is not valid")
+		slug = '/channels/%s/messages' % str(messageorchannelid)
 	# Handle edit message or delete message
-	if method == HTTPClient.METHOD_PATCH or method == HTTPClient.METHOD_DELETE:
-		slug += '/' + str(message.id)
-		if typeof(message.attachments) == TYPE_ARRAY:
-			if message.attachments.size() == 0:
+	if method == HTTPClient.METHOD_PATCH:
+		slug += '/' + str(messageorchannelid.id)
+		if typeof(messageorchannelid.attachments) == TYPE_ARRAY:
+			if messageorchannelid.attachments.size() == 0:
 				payload.attachments = null
 			else:
 				# Add the attachments to keep to the payload
-				payload.attachments = message.attachments
+				payload.attachments = messageorchannelid.attachments
 
-	if not message is Message:
-		assert(false, 'Invalid Type: message must be a valid Message')
+	if method == HTTPClient.METHOD_DELETE:
+		slug += '/' + str(content)
+	#if not message is Message:
+	#	assert(false, 'Invalid Type: message must be a valid Message')
 
 	# Check if the content is only a string
 	if typeof(content) == TYPE_STRING and content.length() > 0:
 		assert(content.length() <= 2048, 'Message content must be less than 2048 characters')
 		payload.content = content
 
-	elif typeof(content) == TYPE_DICTIONARY: # Check if the content is the options dictionary
+	elif typeof(content) == TYPE_DICTIONARY:  # Check if the content is the options dictionary
 		options = content
 		content = null
 
@@ -669,7 +775,10 @@ func _send_message_request(message: Message, content, options := {}, method := H
 		"""
 
 		if options.has('content') and Helpers.is_str(options.content):
-			assert(options.content.length() <= 2048, 'Message content must be less than 2048 characters')
+			assert(
+				options.content.length() <= 2048,
+				'Message content must be less than 2048 characters'
+			)
 			payload.content = options.content
 
 		if options.has('tts') and options.tts:
@@ -683,13 +792,17 @@ func _send_message_request(message: Message, content, options := {}, method := H
 					payload.embeds.append(embed._to_dict())
 
 		if options.has('components') and options.components.size() > 0:
-			assert(options.components.size() <= 5, 'Message can have a max of 5 MessageActionRow components.')
+			assert(
+				options.components.size() <= 5,
+				'Message can have a max of 5 MessageActionRow components.'
+			)
 			for component in options.components:
-				assert(component is MessageActionRow, 'Parent component must be a MessageActionRow.')
+				assert(
+					component is MessageActionRow, 'Parent component must be a MessageActionRow.'
+				)
 				if payload.components == null:
 					payload.components = []
 				payload.components.append(component._to_dict())
-
 
 		if options.has('allowed_mentions') and options.allowed_mentions:
 			if typeof(options.allowed_mentions) == TYPE_DICTIONARY:
@@ -715,24 +828,31 @@ func _send_message_request(message: Message, content, options := {}, method := H
 			payload.message_reference = options.message_reference
 
 		if options.has('files') and options.files:
-			assert(typeof(options.files) == TYPE_ARRAY, 'Invalid Type: files in message options must be an array')
+			assert(
+				typeof(options.files) == TYPE_ARRAY,
+				'Invalid Type: files in message options must be an array'
+			)
 
 			if options.files.size() > 0:
 				# Loop through each file
 				for file in options.files:
-					assert(file.has('name') and Helpers.is_valid_str(file.name), 'Missing name for file in files')
-					assert(file.has('media_type') and Helpers.is_valid_str(file.media_type), 'Missing media_type for file in files')
+					assert(
+						file.has('name') and Helpers.is_valid_str(file.name),
+						'Missing name for file in files'
+					)
+					assert(
+						file.has('media_type') and Helpers.is_valid_str(file.media_type),
+						'Missing media_type for file in files'
+					)
 					assert(file.has('data') and file.data, 'Missing data for file in files')
-					assert(file.data is PoolByteArray, 'Invalid Type: data of file in files must be PoolByteArray')
-
+					assert(
+						file.data is PoolByteArray,
+						'Invalid Type: data of file in files must be PoolByteArray'
+					)
 
 			var json_payload = payload.duplicate(true)
-			var new_payload = {
-				'files': options.files,
-				'payload_json': json_payload
-			}
+			var new_payload = {'files': options.files, 'payload_json': json_payload}
 			payload = new_payload
-
 
 	var res
 	if payload.has('files') and payload.files and typeof(payload.files) == TYPE_ARRAY:
@@ -746,7 +866,6 @@ func _send_message_request(message: Message, content, options := {}, method := H
 	else:
 		res = yield(_send_request(slug, payload, method), 'completed')
 
-
 	if method == HTTPClient.METHOD_DELETE:
 		return res
 	else:
@@ -757,12 +876,30 @@ func _send_message_request(message: Message, content, options := {}, method := H
 		var msg = Message.new(res)
 		return msg
 
+# func request_guild_members(guild_id):
+# 	assert(Helpers.is_valid_str(guild_id), 'Invalid Type: guild_id must be a String')
+
+# 	if not guilds.has(guild_id):
+# 		push_error("Guild not found with that guild_id")
+# 		return yield()
+
+# 	var response_d = {
+# 		'op': 8,  # Request guild members
+# 	}
+
+# 	response_d['d'] = {
+# 		'guild_id': guild_id,
+# 		'query': '',
+# 		'limit': 0
+# 	}
+# 	_send_dict_wss(response_d)
+
 func _update_presence(new_presence: Dictionary) -> void:
 	var status = new_presence.status
 	var activity = new_presence.activity
 
 	var response_d = {
-		'op': 3, # Presence update
+		'op': 3,  # Presence update
 	}
 	response_d['d'] = {
 		'since': new_presence if new_presence.has('since') else null,
@@ -773,11 +910,11 @@ func _update_presence(new_presence: Dictionary) -> void:
 	_send_dict_wss(response_d)
 
 
-
 # Helper functions
 func _jsonstring_to_dict(data: String) -> Dictionary:
 	var json_parsed = JSON.parse(data)
 	return json_parsed.result
+
 
 func _setup_heartbeat_timer(interval: int) -> void:
 	# Setup heartbeat timer and start it
@@ -786,22 +923,51 @@ func _setup_heartbeat_timer(interval: int) -> void:
 	timer.wait_time = _heartbeat_interval
 	timer.start()
 
+
 func _send_dict_wss(d: Dictionary) -> void:
 	var payload = to_json(d)
 	_client.get_peer(1).put_packet(payload.to_utf8())
 
+
 func _clean_guilds(guilds: Array) -> void:
 	for guild in guilds:
-		# converts the unavailable property to available
+		# Converts the unavailable property to available
 		if guild.has('unavailable'):
 			guild.available = not guild.unavailable
 		else:
 			guild.available = true
 		guild.erase('unavailable')
 
+		if guild.has('channels'):
+			for channel in guild.channels:
+				_clean_channel(channel)
+				channel.guild_id = guild.id
+				channels[channel.id] = channel
+
+		if guild.has('members') and typeof(guild.members) == TYPE_ARRAY:
+			# Parse the guild members
+			var members = {}
+			for member in guild.members:
+				var member_id = member.user.id
+				users[member_id] = member.user
+				member.erase("user")
+				members[member_id] = member
+			guild.members = members
+
+		if guild.has('roles') and typeof(guild.roles) == TYPE_ARRAY:
+			# Parse the guild roles
+			var roles = {}
+			for role in guild.roles:
+				var role_id = role.id
+				role.erase("id")
+				roles[role_id] = role
+			guild.roles = roles
+
+
 func _clean_channel(channel: Dictionary) -> void:
 	if channel.has('type') and str(channel.type) in CHANNEL_TYPES.keys():
 		channel.type = CHANNEL_TYPES.get(str(channel.type))
+
 
 func _parse_message(message: Dictionary):
 	assert(typeof(message) == TYPE_DICTIONARY, 'Invalid Type: message must be a Dictionary')
@@ -826,10 +992,6 @@ func _parse_message(message: Dictionary):
 
 	if message.has('author') and typeof(message.author) == TYPE_DICTIONARY:
 		# get the cached author of the message
-		var user = users.get(str(message.author.id))
-		if user:
-			message.author = user
-		else:
-			message.author = User.new(self, message.author)
+		message.author = User.new(self, message.author)
 
 	return 1
