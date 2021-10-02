@@ -73,7 +73,7 @@ var INTERACTION_TYPES = {'2': 'APPLICATION_COMMAND', '3': 'MESSAGE_COMPONENT'}
 
 # Public Functions
 func login() -> void:
-	assert(TOKEN.length() > 2, 'ERROR: Unable to login. TOKEN attribute not set.')
+	assert(TOKEN.length() > 10, 'ERROR: Unable to login. TOKEN attribute not set.')
 	_headers = [
 		'Authorization: Bot %s' % TOKEN,
 		'User-Agent: discord.gd (https://github.com/3ddelano/discord.gd)'
@@ -137,8 +137,13 @@ func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 
 	var guild = guilds.get(str(guild_id))
 
-	assert(guild, 'Guild not cached. Fetch guild first')
-	assert(guild.icon, 'Guild has no icon set.')
+	if not guild:
+		push_error('Guild not cached. Fetch guild first')
+		return
+
+	if not guild.icon:
+		push_error('Guild has no icon set.')
+		return
 
 	if size != 256:
 		assert(size in GUILD_ICON_SIZES, 'Invalid size for guild icon provided')
@@ -147,6 +152,21 @@ func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 		_send_get_cdn('/icons/%s/%s.png?size=%s' % [guild.id, guild.icon, size]), 'completed'
 	)
 	return png_bytes
+
+
+func get_guild_member(guild_id: String, member_id: String) -> Dictionary:
+	var member = yield(_send_get('/guilds/%s/members/%s' % [guild_id, member_id]), 'completed')
+	return member
+
+
+func remove_member_role(guild_id: String, member_id: String, role_id: String):
+	var res = yield(_send_get('/guilds/%s/members/%s/roles/%s' % [guild_id, member_id, role_id], HTTPClient.METHOD_DELETE), 'completed')
+	return res
+
+
+func add_member_role(guild_id: String, member_id: String, role_id: String):
+	var res = yield(_send_request('/guilds/%s/members/%s/roles/%s' % [guild_id, member_id, role_id], {}, HTTPClient.METHOD_PUT), 'completed')
+	return res
 
 
 func set_presence(p_options: Dictionary) -> void:

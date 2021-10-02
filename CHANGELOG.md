@@ -4,6 +4,12 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.4
+------
+- Added `DiscordBot.get_guild_member()`
+- Added `DiscordBot.add_member_role()`
+- Added `DiscordBot.remove_member_role()`
+
 1.1.3
 ------
 - Updated `DiscordBot.send` to accept the channel_id or a `Message`
