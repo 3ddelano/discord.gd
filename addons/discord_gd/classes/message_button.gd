@@ -8,7 +8,7 @@ var label: String setget set_label, get_label
 var custom_id: String setget set_custom_id, get_custom_id
 var url: String setget set_url, get_url
 var disabled: bool = false setget set_disabled, get_disabled
-#var emoji: String
+var emoji: Dictionary
 
 var _style setget set_style, get_style
 var type: int = 2
@@ -61,6 +61,14 @@ func get_disabled() -> bool:
 	return disabled
 
 
+func set_emoji(new_emoji: Dictionary):
+	emoji = new_emoji
+	return self
+
+func get_emoji() -> Dictionary:
+	return emoji
+
+
 func _init():
 	return self
 
@@ -89,5 +97,6 @@ func _to_dict() -> Dictionary:
 			'style': _style,
 			'label': label,
 			'custom_id': custom_id,
-			'disabled': disabled
+			'disabled': disabled,
+			'emoji': emoji
 		}

@@ -4,6 +4,12 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.5
+------
+- Added `DiscordBot.create_dm_channel()`
+- Added `DiscordBot.get_guild_emojis()`
+- Added emoji support for `MessageButton`
+
 1.1.4
 ------
 - Added `DiscordBot.get_guild_member()`

@@ -154,9 +154,18 @@ func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 	return png_bytes
 
 
+func get_guild_emojis(guild_id: String) -> Array:
+	var res = yield(_send_get('/guilds/%s/emojis' % guild_id), 'completed')
+	return res
+
 func get_guild_member(guild_id: String, member_id: String) -> Dictionary:
 	var member = yield(_send_get('/guilds/%s/members/%s' % [guild_id, member_id]), 'completed')
 	return member
+
+
+func create_dm_channel(user_id: String) -> Dictionary:
+	var res = yield(_send_request('/users/@me/channels', {"recipient_id": user_id}), 'completed')
+	return res
 
 
 func remove_member_role(guild_id: String, member_id: String, role_id: String):
