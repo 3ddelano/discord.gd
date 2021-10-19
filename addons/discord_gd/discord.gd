@@ -766,18 +766,18 @@ func _send_message_request(
 	else:
 		assert(messageorchannelid.length() > 16, "channel_id is not valid")
 		slug = '/channels/%s/messages' % str(messageorchannelid)
+
 	# Handle edit message or delete message
-	if method == HTTPClient.METHOD_PATCH:
+	if method == HTTPClient.METHOD_PATCH or method == HTTPClient.METHOD_DELETE:
 		slug += '/' + str(messageorchannelid.id)
-		if typeof(messageorchannelid.attachments) == TYPE_ARRAY:
+
+	if method == HTTPClient.METHOD_PATCH:
+		if typeof(messageorchannelid) == TYPE_OBJECT and messageorchannelid.has('attachments') and typeof(messageorchannelid.attachments) == TYPE_ARRAY:
 			if messageorchannelid.attachments.size() == 0:
 				payload.attachments = null
 			else:
 				# Add the attachments to keep to the payload
 				payload.attachments = messageorchannelid.attachments
-
-	if method == HTTPClient.METHOD_DELETE:
-		slug += '/' + str(content)
 	#if not message is Message:
 	#	assert(false, 'Invalid Type: message must be a valid Message')
 

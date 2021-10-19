@@ -4,6 +4,10 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.6
+------
+- Fixed `DiscordBot.delete()` (Wasn't deleting the message)
+
 1.1.5
 ------
 - Added `DiscordBot.create_dm_channel()`
