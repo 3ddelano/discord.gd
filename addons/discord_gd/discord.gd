@@ -772,7 +772,7 @@ func _send_message_request(
 		slug += '/' + str(messageorchannelid.id)
 
 	if method == HTTPClient.METHOD_PATCH:
-		if typeof(messageorchannelid) == TYPE_OBJECT and messageorchannelid.has('attachments') and typeof(messageorchannelid.attachments) == TYPE_ARRAY:
+		if typeof(messageorchannelid) == TYPE_OBJECT and typeof(messageorchannelid.attachments) == TYPE_ARRAY:
 			if messageorchannelid.attachments.size() == 0:
 				payload.attachments = null
 			else:
