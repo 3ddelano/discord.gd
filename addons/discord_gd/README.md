@@ -79,5 +79,7 @@ Thanks for your support :)
 ### Donate
 <a href="https://www.buymeacoffee.com/3ddelano" target="_blank"><img height="41" width="174" src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy Me A Coffee" width="150" ></a>
 
+BTC: 37oUgEknJWZG7s6viV23wwCrfeTGhCZuqr
+
 ### Support Server
 For doubts / help / bugs / problems / suggestions do join: [3ddelano Cafe](https://discord.gg/FZY9TqW)

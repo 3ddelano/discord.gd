@@ -27,8 +27,10 @@ signal guild_delete(bot, guild)  # bot: DiscordBot, guild: Dictionary
 signal message_create(bot, message, channel)  # bot: DiscordBot, message: Message, channel: Dictionary
 signal message_delete(bot, message)  # bot: DiscordBot, message: Dictionary
 signal interaction_create(bot, interaction)  # bot: DiscordBot, interaction: DiscordInteraction
-#signal message_reaction_add(bot, reaction) # bot: DiscordBot, reaction: Dictionary
-#signal message_reaction_remove(bot, reaction) # bot: DiscordBot, reaction: Dictionary
+signal message_reaction_add(bot, data) # bot: DiscordBot, data: Dictionary
+signal message_reaction_remove(bot, data) # bot: DiscordBot, data: Dictionary
+signal message_reaction_remove_all(bot, data) # bot: DiscordBot, data: Dictionary
+signal message_reaction_remove_emoji(bot, data) # bot: DiscordBot, data: Dictionary
 
 # Private Variables
 var _gateway_base = 'wss://gateway.discord.gg/?v=9&encoding=json'
@@ -233,16 +235,54 @@ func set_presence(p_options: Dictionary) -> void:
 	_update_presence(new_presence)
 
 
-# Discord doesn't support URL encoding emojis so this will have to wait
-#func create_reaction(message: Message, emoji: String) -> int:
-#	assert(typeof(emoji) == TYPE_STRING, "Invalid Type: emoji must be a String")
-#	print(emoji.percent_encode())
-#	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s/%%40me" % [message.channel_id, message.id, emoji], HTTPClient.METHOD_PUT, ['Content-Length:0']), "completed")
-#	return status_code
-#
-#func delete_reactions(reaction: Dictionary) -> int:
-#	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions" % [reaction.channel_id, reaction.message_id], HTTPClient.METHOD_DELETE), "completed")
-#	return status_code
+# ONLY custom emojis will work, pass in only the Id of the emoji to the custom_emoji
+func create_reaction(messageordict, custom_emoji: String) -> int:
+	assert(Helpers.is_valid_str(custom_emoji), "Invalid Type: custom_emoji must be a String")
+	custom_emoji = 'a:' + custom_emoji
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+
+	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
+		messageordict.id = messageordict.message_id
+
+	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s/@me" % [messageordict.channel_id, messageordict.id, custom_emoji], HTTPClient.METHOD_PUT, ['Content-Length:0']), "completed")
+	return status_code
+
+func delete_reaction(messageordict, custom_emoji: String, userid: String = "@me") -> int:
+	assert(Helpers.is_valid_str(custom_emoji), "Invalid Type: custom_emoji must be a String")
+	custom_emoji = 'a:' + custom_emoji
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+
+	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
+		messageordict.id = messageordict.message_id
+
+	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s/%s" % [messageordict.channel_id, messageordict.id, custom_emoji, userid], HTTPClient.METHOD_DELETE, ['Content-Length:0']), "completed")
+
+	return status_code
+
+func delete_reactions(messageordict, custom_emoji = '') -> int:
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
+		messageordict.id = messageordict.message_id
+
+	var status_code
+	if custom_emoji != "":
+		custom_emoji = 'a:' + custom_emoji
+		status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s" % [messageordict.channel_id, messageordict.id, custom_emoji], HTTPClient.METHOD_DELETE, ['Content-Length:0']), "completed")
+	else:
+		status_code = yield(_send_get("/channels/%s/messages/%s/reactions" % [messageordict.channel_id, messageordict.id], HTTPClient.METHOD_DELETE, ['Content-Length:0']), "completed")
+
+	return status_code
+
+func get_reactions(messageordict, custom_emoji: String):
+	assert(Helpers.is_valid_str(custom_emoji), "Invalid Type: custom_emoji must be a String")
+	custom_emoji = 'a:' + custom_emoji
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
+		messageordict.id = messageordict.message_id
+
+	var ret = yield(_send_get("/channels/%s/messages/%s/reactions/%s" % [messageordict.channel_id, messageordict.id, custom_emoji]), "completed")
+	return ret
+
 
 
 # Private Functions
@@ -471,13 +511,22 @@ func _handle_events(dict: Dictionary) -> void:
 			var d = dict.d
 			emit_signal('message_delete', self, d)
 
-#		'MESSAGE_REACTION_ADD':
-#			var d = dict.d
-#			emit_signal('message_reaction_add', self, d)
-#
-#		'MESSAGE_REACTION_REMOVE':
-#			var d = dict.d
-#			emit_signal('message_reaction_remove', self, d)
+		'MESSAGE_REACTION_ADD':
+			var d = dict.d
+
+			emit_signal('message_reaction_add', self, d)
+
+		'MESSAGE_REACTION_REMOVE':
+			var d = dict.d
+			emit_signal('message_reaction_remove', self, d)
+
+		'MESSAGE_REACTION_REMOVE_ALL':
+			var d = dict.d
+			emit_signal('message_reaction_remove_all', self, d)
+
+		'MESSAGE_REACTION_REMOVE_EMOJI':
+			var d = dict.d
+			emit_signal('message_reaction_remove_emoji', self, d)
 
 		'INTERACTION_CREATE':
 			var d = dict.d

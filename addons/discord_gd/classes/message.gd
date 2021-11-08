@@ -60,9 +60,9 @@ var MESSAGE_TYPES = {
 
 func _init(message: Dictionary):
 	# Compulsory
+	assert(typeof(message) == TYPE_DICTIONARY, 'Invalid type: message must be a Dictionary')
 	assert(message.id, 'Message must have an id')
 	id = message.id
-
 	assert(message.has('type'), 'Message must have a type')
 
 	assert(message.has('channel_id') and message.channel_id and Helpers.is_valid_str(message.channel_id), 'Message must have a valid channel_id')

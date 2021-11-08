@@ -4,10 +4,19 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
-Master
+1.1.7
 ------
+### Implemented reactions (CUSTOM REACTIONS ONLY)
 - Fixed `DiscordBot.edit()` was not updating `Message.attachments` properly
-
+- Added `DiscordBot.create_reaction()`
+- Added `DiscordBot.delete_reaction()`
+- Added `DiscordBot.delete_reactions()`
+- Added `DiscordBot.get_reactions()`
+- Added signal `DiscordBot.message_reaction_add`
+- Added signal `DiscordBot.message_reaction_remove`
+- Added signal `DiscordBot.message_reaction_remove_all`
+- Added signal `DiscordBot.message_reaction_remove_emoji`
+    
 1.1.6
 ------
 - Fixed `DiscordBot.delete()` (Wasn't deleting the message)
