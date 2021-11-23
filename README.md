@@ -73,7 +73,7 @@ Thanks for your support :)
 ### Supporters
 
 ```
-- None ( You can become the first)
+- YaBoyTwiz#6733
 ```
 
 ### Donate
