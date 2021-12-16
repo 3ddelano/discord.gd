@@ -53,3 +53,8 @@ static func to_image_texture(image: Image) -> ImageTexture:
 	var texture = ImageTexture.new()
 	texture.create_from_image(image)
 	return texture
+
+
+# Ensures that the String's length is less than or equal to the specified length
+static func assert_length(variable: String, length: int, msg: String):
+	assert(variable.length() <= length, msg)

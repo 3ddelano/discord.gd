@@ -4,6 +4,12 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.8
+------
+### Implemented select menus
+- Added class `SelectMenu`
+- Added helper method `Helpers.assert_length()`
+
 1.1.7
 ------
 ### Implemented reactions (CUSTOM REACTIONS ONLY)
