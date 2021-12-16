@@ -21,7 +21,7 @@ func get_custom_id() -> String:
 	return custom_id
 
 
-func add_option(value: String, label: String, data: Dictionary):
+func add_option(value: String, label: String, data: Dictionary = {}):
 	assert(options.size() <= 25, "options ofSelectMenu cannot have more than 25 options")
 	assert(Helpers.is_valid_str(value), "value of SelectMenu option  must be a valid String")
 	Helpers.assert_length(value, 100, "value of SelectMenu option cannot be more than 100 characters")
