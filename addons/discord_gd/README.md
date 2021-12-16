@@ -28,7 +28,7 @@ This is a regular plugin for Godot.
 Copy the contents of `addons/discord_gd` into the `addons/` folder in the same directory as your project, and activate it in your project settings.
 
 The plugin now comes with no extra assets to stay lightweight.
-If you want to try an example scene, you can install this demo once the plugin is setup and active: [Discord.gd Examples](https://github.com/3ddelano/discord_gd_examples)
+If you want to try an example scene, you can see the examples from: [Discord.gd Examples](https://github.com/3ddelano/discord_gd_examples)
 
 > For in-depth installation instructions check the [Installation Wiki](https://github.com/3ddelano/discord.gd/wiki/Installation)
 
@@ -38,13 +38,12 @@ If you want to try an example scene, you can install this demo once the plugin i
 Getting Started
 ----------
 
-1. After activating the plugin. There will be a new DiscordBot node added to Godot.
-Click on any node in the scene tree of your scene for example `MyBot`:Node2D and add the DiscordBot as a child.
+1. After activating the plugin. There will be a new `DiscordBot` node added to Godot.
+Click on any node in the scene tree of your scene for example `Root` and add the `DiscordBot` node as a child.
 
-2. Connect the various signals (`bot_ready`, `guild_create`, `message_create`, `message_delete`, etc) of the DiscordBot to the parent node, either through the GUI or in the script using the connect() function.
+2. Connect the various signals (`bot_ready`, `guild_create`, `message_create`, `message_delete`, etc) of the `DiscordBot` node to the parent node, either through the editor or in the script using the `connect()` method.
 
-3. Attach a script to the parent node.
-Example script on `MyBot` node
+3. Attach a script to the `Root` node.
 
 ```GDScript
 extends Node2D
@@ -53,7 +52,8 @@ func _ready():
 	var discord_bot = $DiscordBot
 	discord_bot.TOKEN = "your_bot_token_here"
 	discord_bot.login()
-	
+	discord_bot.connect("bot_ready", self, "_on_DiscordBot_bot_ready")
+
 func _on_DiscordBot_bot_ready(bot: DiscordBot):
 	print('Logged in as ' + bot.user.username + '#' + bot.user.discriminator)
 	print('Listening on ' + str(bot.channels.size()) + ' channels and ' + str(bot.guilds.size()) ' guilds.')
@@ -67,19 +67,17 @@ func _on_DiscordBot_bot_ready(bot: DiscordBot):
 Contributing
 -----------
 
-This plugin is a non-profit project developped by voluntary contributors. The following is the list of the current donors.
-Thanks for your support :)
+This plugin is a non-profit project developped by voluntary contributors.
 
 ### Supporters
 
 ```
-- None ( You can become the first)
+- YaBoyTwiz#6733
 ```
 
-### Donate
+### Support the project development
 <a href="https://www.buymeacoffee.com/3ddelano" target="_blank"><img height="41" width="174" src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy Me A Coffee" width="150" ></a>
 
-BTC: 37oUgEknJWZG7s6viV23wwCrfeTGhCZuqr
+Want to support in other ways? Contact me on Discord: `@3ddelano#6033`
 
-### Support Server
 For doubts / help / bugs / problems / suggestions do join: [3ddelano Cafe](https://discord.gg/FZY9TqW)
