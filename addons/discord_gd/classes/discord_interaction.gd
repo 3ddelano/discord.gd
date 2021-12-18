@@ -1,4 +1,7 @@
 class_name DiscordInteraction
+"""
+Represents a Discord interaction.
+"""
 
 var bot
 var replied = false
@@ -22,8 +25,24 @@ var RESPONSE_TYPES = {
 	'CHANNEL_MESSAGE_WITH_SOURCE': 4,
 	'DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE': 5,
 	'DEFERRED_UPDATE_MESSAGE': 6,
-	'UPDATE_MESSAGE': 7
+	'UPDATE_MESSAGE': 7,
+	'APPLICATION_COMMAND_AUTOCOMPLETE_RESULT': 8
 }
+
+var TYPES = {
+	1: 'PING',
+	2: 'APPLICATION_COMMAND',
+	3: 'MESSAGE_COMPONENT',
+	4: 'APPLICATION_COMMAND_AUTOCOMPLETE'
+}
+#= {'2': 'APPLICATION_COMMAND', '3': 'MESSAGE_COMPONENT', '4': 'AUTOCOMPLETE'}
+
+func is_command() -> bool:
+	return type == 'APPLICATION_COMMAND'
+
+
+func is_autocomplete() -> bool:
+	return type == 'APPLICATION_COMMAND_AUTOCOMPLETE'
 
 
 func is_message_component() -> bool:
@@ -40,6 +59,19 @@ func is_select_menu() -> bool:
 
 func in_guild() -> bool:
 	return guild_id != '' and member != {}
+
+
+func respond_autocomplete(choices: Array):
+	var payload = {
+		'type': RESPONSE_TYPES['APPLICATION_COMMAND_AUTOCOMPLETE_RESULT'],
+		'data': {
+			'choices': choices
+		}
+	}
+	var res = yield(
+		bot._send_request('/interactions/%s/%s/callback' % [id, token], payload), 'completed'
+	)
+	return res
 
 
 func fetch_reply(message_id: String = '@original'):
@@ -148,9 +180,15 @@ func edit_follow_up(msg: Message, options: Dictionary):
 	var res = yield(_edit_message(msg.id, options), 'completed')
 	return res
 
+
 func delete_follow_up(msg: Message):
 	var res = yield(_delete_message(msg.id), 'completed')
 	return res
+
+
+func has(attribute):
+	return true if self[attribute] else false
+
 
 func _delete_message(message_id: String = '@original'):
 	var res = yield(
@@ -161,6 +199,7 @@ func _delete_message(message_id: String = '@original'):
 		'completed'
 	)
 	return res
+
 
 func _edit_message(message_id: String, options: Dictionary):
 	options.type = RESPONSE_TYPES['CHANNEL_MESSAGE_WITH_SOURCE']
@@ -186,7 +225,7 @@ func _send_request(
 	var _type = options.type
 	options.erase('type')
 
-	options.attachments = message.attachments
+	options.attachments = message.attachments if message != null else []
 
 	if options.has('ephemeral') and typeof(options.ephemeral) == TYPE_BOOL:
 		ephemeral = options.ephemeral
@@ -217,8 +256,8 @@ func _send_request(
 		'type': _type,
 		'data':
 		{
-			'tts': options.tts if options.has('tts') else message.tts,
-			'content': options.content if options.has('content') else message.content,
+			'tts': options.tts if options.has('tts') else false,
+			'content': options.content if options.has('content') else null,
 			'embeds': _embeds,
 			'allowed_mentions': options.allowed_mentions if options.has('allowed_mentions') else {},
 			'attachments': options.attachments if options.has('attachments') else [],
@@ -226,6 +265,11 @@ func _send_request(
 			'components': _components
 		}
 	}
+	if message != null:
+		if not options.has('tts'):
+			payload.tts = message.tts
+		if not options.has('content'):
+			payload.content = message.content
 
 	if method == HTTPClient.METHOD_PATCH or is_follow_up:
 		payload = payload.data
@@ -253,13 +297,6 @@ func _send_request(
 		return true
 
 
-#func is_command() -> bool:
-#	return true
-
-#func is_context_menu() -> bool:
-#	return
-
-
 func _init(_bot, interaction: Dictionary):
 	bot = _bot
 	assert(Helpers.is_valid_str(interaction.id), 'Interaction must have an id')
@@ -267,13 +304,13 @@ func _init(_bot, interaction: Dictionary):
 		Helpers.is_valid_str(interaction.application_id), 'Interaction must have an application id'
 	)
 	assert(Helpers.is_valid_str(interaction.token), 'Interaction must have a token')
-	assert(Helpers.is_valid_str(interaction.type), 'Interaction must have a type')
+	assert(interaction.has('type'), 'Interaction must have a type')
 	assert(Helpers.is_num(interaction.version), 'Interaction must have a version')
 
 	id = interaction.id
 	application_id = interaction.application_id
 	token = interaction.token
-	type = interaction.type
+	type = TYPES[int(interaction.type)]
 
 	if interaction.has('message'):
 		var coroutine = bot._parse_message(interaction.message)
@@ -284,6 +321,13 @@ func _init(_bot, interaction: Dictionary):
 
 	if interaction.has('member'):
 		member = interaction.member
+		# Try to parse the member permissions
+		if member.has('permissions'):
+			member.permissions = Permissions.new(member.permissions)
+
+		# Try to parse the member user
+		if member.has('user'):
+			member.user = User.new(bot, member.user)
 
 	if interaction.has('guild_id'):
 		guild_id = interaction.guild_id
@@ -293,7 +337,18 @@ func _init(_bot, interaction: Dictionary):
 
 	if interaction.has('data'):
 		data = interaction.data
+		if type == 'APPLICATION_COMMAND':
+			data.type = ApplicationCommand._COMMAND_TYPES[int(data.type)]
+			data = _parse_data_options(interaction.data)
 
+func _parse_data_options(data, option = false):
+	if option and data.has('type'):
+		data.type = ApplicationCommand._OPTION_TYPES[int(data.type)]
+
+	if data.has('options'):
+		for i in range(len(data.options)):
+			data.options[i] = _parse_data_options(data.options[i], true)
+	return data
 
 func _to_string(pretty: bool = false) -> String:
 	return JSON.print(_to_dict(), '\t') if pretty else JSON.print(_to_dict())

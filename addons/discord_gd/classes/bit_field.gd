@@ -1,4 +1,7 @@
 class_name BitField
+"""
+Helper class for bit operations.
+"""
 
 var default_bit = 0
 var FLAGS = {}

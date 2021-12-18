@@ -1,4 +1,7 @@
 class_name MessageActionRow
+"""
+Represnts a Discord message action row which has components
+"""
 
 var components: Array
 
@@ -7,8 +10,8 @@ func _init():
 
 
 func add_component(component, index = -1):
-	assert(components.size() + 1 <= 5, "MessageActionRow cannot have more than 5 components.")
-	assert(component.type != 1, "MessageActionRow cannot contain another MessageActionRow.")
+	assert(components.size() + 1 <= 5, 'MessageActionRow cannot have more than 5 components.')
+	assert(component.type != 1, 'MessageActionRow cannot contain another MessageActionRow.')
 
 	var same_custom_id = false
 	for _component in components:
@@ -16,7 +19,7 @@ func add_component(component, index = -1):
 			if _component.get_custom_id() == component.get_custom_id():
 				same_custom_id = true
 				break
-	assert(same_custom_id == false, "MessageActionRow must contain components with unique custom_id")
+	assert(same_custom_id == false, 'MessageActionRow must contain components with unique custom_id')
 
 	if index == -1:
 		components.append(component)
@@ -63,6 +66,6 @@ func _to_dict() -> Dictionary:
 		_components.append(component._to_dict())
 
 	return {
-		"type": 1,
-		"components": _components
+		'type': 1,
+		'components': _components
 	}

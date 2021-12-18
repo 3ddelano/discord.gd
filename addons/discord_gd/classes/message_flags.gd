@@ -1,4 +1,7 @@
 class_name MessageFlags extends BitField
+"""
+Represents a bitfield of Discord message flags.
+"""
 
 func _init(bits = default_bit):
 	default_bit = 0
@@ -22,5 +25,5 @@ func _init(bits = default_bit):
 	return self
 
 func missing(bits):
-	var BF = load("res://addons/discord_gd/classes/message_flags.gd")
+	var BF = load('res://addons/discord_gd/classes/message_flags.gd')
 	return BF.new(bits).remove(self).to_array()

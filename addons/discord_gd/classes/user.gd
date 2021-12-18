@@ -1,6 +1,6 @@
 class_name User
 """
-Represents a Discord User
+Represents a Discord User.
 """
 
 var id: String

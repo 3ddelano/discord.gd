@@ -1,4 +1,7 @@
 class_name Permissions extends BitField
+"""
+Represents a bitfield of Discord permissions.
+"""
 
 var ALL
 var DEFAULT = 104324673
@@ -61,5 +64,5 @@ func _init(bits = default_bit):
 	return self
 
 func missing(bits):
-	var BF = load("res://addons/discord_gd/classes/permissions.gd")
+	var BF = load('res://addons/discord_gd/classes/permissions.gd')
 	return BF.new(bits).remove(self).to_array()

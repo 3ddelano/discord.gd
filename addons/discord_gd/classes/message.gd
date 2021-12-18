@@ -1,6 +1,6 @@
 class_name Message
 """
-Represents a Discord Message
+Represents a Discord Message.
 """
 
 var id: String

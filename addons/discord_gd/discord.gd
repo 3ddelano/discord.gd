@@ -51,7 +51,7 @@ var _logged_in = false
 # Count of the number of guilds initially loaded
 var guilds_loaded = 0
 
-var CHANNEL_TYPES = {
+const CHANNEL_TYPES = {
 	'0': 'GUILD_TEXT',
 	'1': 'DM',
 	'2': 'GUILD_VOICE',
@@ -70,8 +70,6 @@ var GUILD_ICON_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 var ACTIVITY_TYPES = {'GAME': 0, 'STREAMING': 1, 'LISTENING': 2, 'WATCHING': 3, 'COMPETING': 5}
 
 var PRESENCE_STATUS_TYPES = ['ONLINE', 'DND', 'IDLE', 'INVISIBLE', 'OFFLINE']
-
-var INTERACTION_TYPES = {'2': 'APPLICATION_COMMAND', '3': 'MESSAGE_COMPONENT'}
 
 # Public Functions
 func login() -> void:
@@ -140,12 +138,12 @@ func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 	var guild = guilds.get(str(guild_id))
 
 	if not guild:
-		push_error('Guild not cached. Fetch guild first')
-		return
+		push_error('Guild not found.')
+		return null
 
 	if not guild.icon:
 		push_error('Guild has no icon set.')
-		return
+		return null
 
 	if size != 256:
 		assert(size in GUILD_ICON_SIZES, 'Invalid size for guild icon provided')
@@ -160,13 +158,14 @@ func get_guild_emojis(guild_id: String) -> Array:
 	var res = yield(_send_get('/guilds/%s/emojis' % guild_id), 'completed')
 	return res
 
+
 func get_guild_member(guild_id: String, member_id: String) -> Dictionary:
 	var member = yield(_send_get('/guilds/%s/members/%s' % [guild_id, member_id]), 'completed')
 	return member
 
 
 func create_dm_channel(user_id: String) -> Dictionary:
-	var res = yield(_send_request('/users/@me/channels', {"recipient_id": user_id}), 'completed')
+	var res = yield(_send_request('/users/@me/channels', {'recipient_id': user_id}), 'completed')
 	return res
 
 
@@ -237,58 +236,145 @@ func set_presence(p_options: Dictionary) -> void:
 
 # ONLY custom emojis will work, pass in only the Id of the emoji to the custom_emoji
 func create_reaction(messageordict, custom_emoji: String) -> int:
-	assert(Helpers.is_valid_str(custom_emoji), "Invalid Type: custom_emoji must be a String")
+	assert(Helpers.is_valid_str(custom_emoji), 'Invalid Type: custom_emoji must be a String')
 	custom_emoji = 'a:' + custom_emoji
-	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, 'Invalid type: Expected a Message or Dictionary')
 
 	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
 		messageordict.id = messageordict.message_id
 
-	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s/@me" % [messageordict.channel_id, messageordict.id, custom_emoji], HTTPClient.METHOD_PUT, ['Content-Length:0']), "completed")
+	var status_code = yield(_send_get('/channels/%s/messages/%s/reactions/%s/@me' % [messageordict.channel_id, messageordict.id, custom_emoji], HTTPClient.METHOD_PUT, ['Content-Length:0']), 'completed')
 	return status_code
 
-func delete_reaction(messageordict, custom_emoji: String, userid: String = "@me") -> int:
-	assert(Helpers.is_valid_str(custom_emoji), "Invalid Type: custom_emoji must be a String")
+
+func delete_reaction(messageordict, custom_emoji: String, userid: String = '@me') -> int:
+	assert(Helpers.is_valid_str(custom_emoji), 'Invalid Type: custom_emoji must be a String')
 	custom_emoji = 'a:' + custom_emoji
-	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, 'Invalid type: Expected a Message or Dictionary')
 
 	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
 		messageordict.id = messageordict.message_id
 
-	var status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s/%s" % [messageordict.channel_id, messageordict.id, custom_emoji, userid], HTTPClient.METHOD_DELETE, ['Content-Length:0']), "completed")
+	var status_code = yield(_send_get('/channels/%s/messages/%s/reactions/%s/%s' % [messageordict.channel_id, messageordict.id, custom_emoji, userid], HTTPClient.METHOD_DELETE, ['Content-Length:0']), 'completed')
 
 	return status_code
+
 
 func delete_reactions(messageordict, custom_emoji = '') -> int:
-	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, 'Invalid type: Expected a Message or Dictionary')
 	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
 		messageordict.id = messageordict.message_id
 
 	var status_code
-	if custom_emoji != "":
+	if custom_emoji != '':
 		custom_emoji = 'a:' + custom_emoji
-		status_code = yield(_send_get("/channels/%s/messages/%s/reactions/%s" % [messageordict.channel_id, messageordict.id, custom_emoji], HTTPClient.METHOD_DELETE, ['Content-Length:0']), "completed")
+		status_code = yield(_send_get('/channels/%s/messages/%s/reactions/%s' % [messageordict.channel_id, messageordict.id, custom_emoji], HTTPClient.METHOD_DELETE, ['Content-Length:0']), 'completed')
 	else:
-		status_code = yield(_send_get("/channels/%s/messages/%s/reactions" % [messageordict.channel_id, messageordict.id], HTTPClient.METHOD_DELETE, ['Content-Length:0']), "completed")
+		status_code = yield(_send_get('/channels/%s/messages/%s/reactions' % [messageordict.channel_id, messageordict.id], HTTPClient.METHOD_DELETE, ['Content-Length:0']), 'completed')
 
 	return status_code
 
+
 func get_reactions(messageordict, custom_emoji: String):
-	assert(Helpers.is_valid_str(custom_emoji), "Invalid Type: custom_emoji must be a String")
+	assert(Helpers.is_valid_str(custom_emoji), 'Invalid Type: custom_emoji must be a String')
 	custom_emoji = 'a:' + custom_emoji
-	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, "Invalid type: Expected a Message or Dictionary")
+	assert(messageordict is Message or typeof(messageordict) == TYPE_DICTIONARY, 'Invalid type: Expected a Message or Dictionary')
 	if typeof(messageordict) == TYPE_DICTIONARY and messageordict.has('message_id'):
 		messageordict.id = messageordict.message_id
 
-	var ret = yield(_send_get("/channels/%s/messages/%s/reactions/%s" % [messageordict.channel_id, messageordict.id, custom_emoji]), "completed")
+	var ret = yield(_send_get('/channels/%s/messages/%s/reactions/%s' % [messageordict.channel_id, messageordict.id, custom_emoji]), 'completed')
 	return ret
+
+
+func register_command(command: ApplicationCommand, guild_id: String = '') -> ApplicationCommand:
+	var slug = '/applications/%s' % application.id
+
+	if Helpers.is_valid_str(guild_id):
+		# Registering a guild command
+		slug += '/guilds/%s' % guild_id
+
+	slug += '/commands'
+	var res = yield(_send_request(slug, command._to_dict(true)), 'completed')
+	return ApplicationCommand.new(res)
+
+
+func register_commands(commands: Array, guild_id: String = '') -> Array:
+	for i in range(len(commands)):
+		if commands[i] is ApplicationCommand:
+			commands[i] = commands[i]._to_dict(true)
+
+	var slug = '/applications/%s' % application.id
+
+	if Helpers.is_valid_str(guild_id):
+		# Registering guild commands
+		slug += '/guilds/%s' % guild_id
+
+	slug += '/commands'
+	var res = yield(_send_request(slug, commands, HTTPClient.METHOD_PUT), 'completed')
+	if typeof(res) == TYPE_ARRAY:
+		for i in range(len(res)):
+			res[i] = ApplicationCommand.new(res[i])
+	return res
+
+
+func delete_command(command_id: String, guild_id: String = '') -> int:
+	var slug = '/applications/%s' % application.id
+
+	if Helpers.is_valid_str(guild_id):
+		# Deleting a guild command
+		slug += '/guilds/%s' % guild_id
+
+	slug += '/commands/%s' % command_id
+	var res = yield(_send_get(slug, HTTPClient.METHOD_DELETE), 'completed')
+	return res
+
+
+func delete_commands(guild_id: String = '') -> int:
+	var slug = '/applications/%s' % application.id
+
+	if Helpers.is_valid_str(guild_id):
+		# Deleting guild commands
+		slug += '/guilds/%s' % guild_id
+
+	slug += '/commands'
+	var res = yield(_send_request(slug, [], HTTPClient.METHOD_PUT), 'completed')
+	return res
+
+
+func get_command(command_id: String, guild_id: String = '') -> ApplicationCommand:
+	var slug = '/applications/%s' % application.id
+
+	if Helpers.is_valid_str(guild_id):
+		# Getting a guild command
+		slug += '/guilds/%s' % guild_id
+
+	slug += '/commands/%s' % command_id
+
+	var cmd = yield(_send_get(slug), 'completed')
+	cmd = ApplicationCommand.new(cmd)
+	return cmd
+
+
+func get_commands(guild_id: String = '') -> Array:
+	var slug = '/applications/%s' % application.id
+
+	if Helpers.is_valid_str(guild_id):
+		# Getting guild commands
+		slug += '/guilds/%s' % guild_id
+
+	slug += '/commands'
+
+	var cmds = yield(_send_get(slug), 'completed')
+	for i in range(len(cmds)):
+		cmds[i] = ApplicationCommand.new(cmds[i])
+	return cmds
 
 
 
 # Private Functions
 func _ready() -> void:
 	randomize()
-#
+
 	# Generate needed nodes
 	_generate_timer_nodes()
 
@@ -426,7 +512,7 @@ func _handle_events(dict: Dictionary) -> void:
 		'GUILD_CREATE':
 			var guild = dict.d
 			_clean_guilds([guild])
-			# update number of cached guilds
+			# Update number of cached guilds
 			if guild.has('lazy') and guild.lazy:
 				guilds_loaded += 1
 				if guilds_loaded == guilds.size():
@@ -436,7 +522,7 @@ func _handle_events(dict: Dictionary) -> void:
 				# Joined a new guild
 				emit_signal('guild_create', self, guild)
 
-			# update cache
+			# Update cache
 			guilds[guild.id] = guild
 
 		'GUILD_DELETE':
@@ -454,12 +540,12 @@ func _handle_events(dict: Dictionary) -> void:
 		# 	var data = dict.d
 
 		# 	var guild = guilds[data.guild_id]
-		# 	data.erase("guild_id")
+		# 	data.erase('guild_id')
 
 		# 	# Update users cache
 		# 	var user = data.user
 		# 	var user_id =  user.id
-		# 	data.erase("user")
+		# 	data.erase('user')
 		# 	users[user_id] = user
 
 		# 	if data.has('pending'):
@@ -530,17 +616,13 @@ func _handle_events(dict: Dictionary) -> void:
 
 		'INTERACTION_CREATE':
 			var d = dict.d
-			var type = INTERACTION_TYPES[str(d.type)]
-			d.type = type
 
 			var id = d.id
 			var data = d.data
 			var token = d.token
 
-			var payload = {'type': 4, 'data': {'content': 'received the response'}}
-
 			var interaction = DiscordInteraction.new(self, d)
-			emit_signal("interaction_create", self, interaction)
+			emit_signal('interaction_create', self, interaction)
 
 
 func permissions_in(channel_id: String):
@@ -562,9 +644,8 @@ func permissions_for(user_id: String, channel_id: String):
 
 	# @everyone base role
 	var permissions = Permissions.new(guild.roles[guild.id].permissions)
-	print(permissions is Permissions)
 	if not guild.members.has(user_id):
-		push_warning("Member not found in cached members. Make sure the GUILD_MEMBERS intent is setup.")
+		push_warning('Member not found in cached members. Make sure the GUILD_MEMBERS intent is setup.')
 		return permissions
 
 	var role_ids = guild.members[user_id].roles
@@ -702,7 +783,7 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 		assert(false, 'Unable to upload file. Got empty response from server')
 
 
-func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD_POST):
+func _send_request(slug: String, payload, method = HTTPClient.METHOD_POST):
 	var headers = _headers.duplicate(true)
 
 	var json_header = 'Content-Type: application/json'
@@ -711,7 +792,6 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
-
 	http_request.call_deferred(
 		'request', _https_base + slug, headers, false, method, JSON.print(payload)
 	)
@@ -721,7 +801,6 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 
 	# Check for errors
 	assert(data[0] == HTTPRequest.RESULT_SUCCESS, 'Error sending request: HTTP Failed')
-
 	var response = _jsonstring_to_dict(data[3].get_string_from_utf8())
 	if response == null:
 		if data[1] == 204:
@@ -734,7 +813,8 @@ func _send_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD
 		print('Error: ' + JSON.print(response, '\t'))
 
 	if method != HTTPClient.METHOD_DELETE:
-		assert(not response.has('code'), 'Error sending request. See output window')
+		if response.has('code'):
+			push_error('Error sending request. See output window')
 
 	if response.has('retry_after'):
 		# We got ratelimited
@@ -767,8 +847,7 @@ func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []) ->
 			# Got an error
 			print('GET: status code ', str(data[1]))
 			print('Error sending GET request: ' + JSON.print(response, '\t'))
-		assert(not response.has('code'), 'Error sending GET request. See output window')
-
+			push_error('Error sending GET request. See output window')
 		return response
 
 	else:  # Maybe a PUT/DELETE for reaction
@@ -813,7 +892,7 @@ func _send_message_request(
 	if messageorchannelid is Message:
 		slug ='/channels/%s/messages' % str(messageorchannelid.channel_id)
 	else:
-		assert(messageorchannelid.length() > 16, "channel_id is not valid")
+		assert(messageorchannelid.length() > 16, 'channel_id is not valid')
 		slug = '/channels/%s/messages' % str(messageorchannelid)
 
 	# Handle edit message or delete message
@@ -958,7 +1037,7 @@ func _send_message_request(
 # 	assert(Helpers.is_valid_str(guild_id), 'Invalid Type: guild_id must be a String')
 
 # 	if not guilds.has(guild_id):
-# 		push_error("Guild not found with that guild_id")
+# 		push_error('Guild not found with that guild_id')
 # 		return yield()
 
 # 	var response_d = {
@@ -1028,7 +1107,7 @@ func _clean_guilds(guilds: Array) -> void:
 			for member in guild.members:
 				var member_id = member.user.id
 				users[member_id] = member.user
-				member.erase("user")
+				member.erase('user')
 				members[member_id] = member
 			guild.members = members
 
@@ -1037,7 +1116,7 @@ func _clean_guilds(guilds: Array) -> void:
 			var roles = {}
 			for role in guild.roles:
 				var role_id = role.id
-				role.erase("id")
+				role.erase('id')
 				roles[role_id] = role
 			guild.roles = roles
 

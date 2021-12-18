@@ -4,6 +4,14 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.1.9
+------
+### Implemented application commands (CHAT_INPUT / USER / MESSAGE commands) and also autocomplete response for application commands
+- Added `is_command()`, `is_autocomplete()` and `respond_autocomplete()` methods to `DiscordInteraction`
+- Added `register_command()`, `register_commands()`, `delete_command()`, `delete_commands()`, `get_command()` and `get_commands()` methods to `DiscordBot`
+- Added class `ApplicationCommand`
+- Made data argument in `SelectMenu.add_option()` optional
+
 1.1.8
 ------
 ### Implemented select menus
