@@ -265,11 +265,17 @@ func _send_request(
 			'components': _components
 		}
 	}
-	if message != null:
+
+	if _type == RESPONSE_TYPES['UPDATE_MESSAGE']:
+		# Append the message parts from the original message if the options doesnt contain that part
 		if not options.has('tts'):
-			payload.tts = message.tts
+			payload.data.tts = message.tts
 		if not options.has('content'):
-			payload.content = message.content
+			payload.data.content = message.content
+		if not options.has('embeds'):
+			payload.data.embeds = message.embeds
+		if not options.has('components'):
+			payload.data.components = message.components
 
 	if method == HTTPClient.METHOD_PATCH or is_follow_up:
 		payload = payload.data
@@ -363,7 +369,7 @@ func _to_dict() -> Dictionary:
 		'version': 1,
 		'type': type,
 		'token': token,
-		'message': message or {},
+		'message': message._to_string() if message is Message else {},
 		'member': member,
 		'id': id,
 		'guild_id': guild_id,

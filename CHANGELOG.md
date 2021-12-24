@@ -4,6 +4,11 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+1.2.0
+------
+- Fixed some bugs in `DiscordInteraction` regarding updating the message of interaction.
+- Fixed typo in SelectMenu
+
 1.1.9
 ------
 ### Implemented application commands (CHAT_INPUT / USER / MESSAGE commands) and also autocomplete response for application commands

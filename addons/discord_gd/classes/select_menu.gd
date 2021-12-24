@@ -43,7 +43,7 @@ func add_option(value: String, label: String, data: Dictionary = {}):
 		_data['description'] = data.description
 
 	if data.has('emoji'):
-		assert(typeof(data.emoji) == TYPE_DICTIONARY, 'emoji of SelecMenu option must be a Dictionary')
+		assert(typeof(data.emoji) == TYPE_DICTIONARY, 'emoji of SelectMenu option must be a Dictionary')
 		_data['emoji'] = data.emoji
 
 	if data.has('default'):
