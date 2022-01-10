@@ -56,7 +56,7 @@ func _ready():
 
 func _on_DiscordBot_bot_ready(bot: DiscordBot):
 	print('Logged in as ' + bot.user.username + '#' + bot.user.discriminator)
-	print('Listening on ' + str(bot.channels.size()) + ' channels and ' + str(bot.guilds.size()) ' guilds.')
+	print('Listening on ' + str(bot.channels.size()) + ' channels and ' + str(bot.guilds.size()) + ' guilds.')
 
 ```
 
