@@ -58,3 +58,19 @@ static func to_image_texture(image: Image) -> ImageTexture:
 # Ensures that the String's length is less than or equal to the specified length
 static func assert_length(variable: String, length: int, msg: String):
 	assert(variable.length() <= length, msg)
+
+
+# Convert the ISO string to a unix timestamp
+static func iso2unix(iso_string: String) -> int:
+	var date := iso_string.split("T")[0].split("-")
+	var time := iso_string.split("T")[1].trim_suffix("Z").split(":")
+
+	var datetime = {
+		year = date[0],
+		month = date[1],
+		day = date[2],
+		hour = time[0],
+		minute = time[1],
+		second = time[2],
+	}
+	return OS.get_unix_time_from_datetime(datetime)

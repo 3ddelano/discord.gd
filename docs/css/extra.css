@@ -1,0 +1,21 @@
+/* for single line code blocks `like this` */
+code {
+  padding: 0.2em 0.4em !important;
+  margin: 0 !important;
+  border-radius: 6px !important;
+  --md-code-bg-color: #afb8c133;
+  -md-code-fg-color: #24292f;
+}
+
+/* for the code blocks */
+code.hljs {
+  padding: 16px !important;
+  --md-code-fg-color: #d5d7e2;
+  /* --md-code-bg-color: #b4b8aa; */
+  --md-code-bg-color: hsl(215, 21%, 21%);
+  --md-default-fg-color--lighter: rgba(255, 255, 255, 0.52);
+}
+
+[data-md-color-scheme="slate"] code.hljs {
+  --md-code-bg-color: #161b22;
+}

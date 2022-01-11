@@ -1,0 +1,127 @@
+site_name: Discord.gd
+site_description: "A Discord Bot API wrapper for Godot. Make bots in 100% GDScript."
+site_author: "Delano Lourenco"
+repo_url: "https://github.com/3ddelano/discord.gd"
+copyright: Copyright &copy; 2022 Delano Lourenco
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - How to Update: how-to-update.md
+  - Getting Started: getting-started.md
+  - Simple Bot: simple-bot.md
+  - Advanced Bot: advanced-bot.md
+  - Classes:
+      DiscordBot: classes/discordbot.md
+      Message: classes/message.md
+      User: classes/user.md
+      Embed: classes/embed.md
+      Helpers: classes/helpers.md
+      MessageActionRow: classes/messageactionrow.md
+      MessageButton: classes/messagebutton.md
+      SelectMenu: classes/selectmenu.md
+      DiscordInteraction: classes/discordinteraction.md
+      ApplicationCommand: classes/applicationcommand.md
+      Bitfield: classes/bitfield.md
+      MessageFlags: classes/messageflags.md
+theme:
+  name: "material"
+  language: "en"
+  favicon: assets/favicon.png
+  static_templates:
+    - 404.html
+  features:
+    - navigation.tracking
+    - navigation.top
+    - navigation.sections
+    - search.highlight
+    - search.share
+    - search.suggest
+    - header.autohide
+  include_search_page: false
+  search_index_only: true
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/favicon.png
+  icon:
+    logo: material/library
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+extra_css:
+  - css/github-dark.min.css
+  - css/extra.css
+extra_javascript:
+  - js/highlight.min.js
+  - js/gdscript.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js
+  - js/extra.js
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/3ddelano
+      name: Github
+    - icon: fontawesome/brands/youtube
+      link: https://youtube.com/c/delanolourenco
+      name: Youtube
+  # version:
+  #   provider: mike
+  # analytics:
+  #   provider: google
+  #   property: G-XXXXXXXXXX
+  #   feedback:
+  #     title: Was this page helpful?
+  #     ratings:
+  #       - icon: material/emoticon-happy-outline
+  #         name: This page was helpful
+  #         data: 1
+  #         note: >-
+  #           Thanks for your feedback!
+  #       - icon: material/emoticon-sad-outline
+  #         name: This page could be improved
+  #         data: 0
+  #         note: >-
+  #           Thanks for your feedback! Help us improve this page by
+  #           using our <a href="..." target=_blank>feedback form</a>.
+  # consent:
+  #   title: Cookie consent
+  #   description: >-
+  #     We use cookies to recognize your repeated visits and preferences, as well
+  #     as to measure the effectiveness of our documentation and whether users
+  #     find what they're searching for. With your consent, you're helping us to
+  #     make our documentation better.
+markdown_extensions:
+  - meta
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - admonition
+  - toc:
+      title: On this page
+      permalink: true
+plugins:
+  - search:
+      separator: '[\s\-\._]'
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+  # - git-revision-date
+  - ezlinks:
+      warn_ambiguities: true
+      wikilinks: true

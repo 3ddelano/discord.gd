@@ -4,6 +4,13 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+Latest
+------
+- Moved documentation to [Discord.gd](https://3ddelano.github.io/discord.gd)
+- Added `DiscordBot.guild_update` signal
+- Added `Helpers.iso2unix()` method
+- Fixed `DiscordBot.get_guild_icon()` used to crash the bot if guild had no icon. 
+
 1.2.0
 ------
 - Fixed some bugs in `DiscordInteraction` regarding updating the message of interaction.

@@ -23,6 +23,7 @@ var users = {}
 # Signals
 signal bot_ready(bot)  # bot: DiscordBot
 signal guild_create(bot, guild)  # bot: DiscordBot, guild: Dictionary
+signal guild_update(bot, guild)  # bot: DiscordBot, guild: Dictionary
 signal guild_delete(bot, guild)  # bot: DiscordBot, guild: Dictionary
 signal message_create(bot, message, channel)  # bot: DiscordBot, message: Message, channel: Dictionary
 signal message_delete(bot, message)  # bot: DiscordBot, message: Dictionary
@@ -139,11 +140,13 @@ func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 
 	if not guild:
 		push_error('Guild not found.')
-		return null
+		yield(get_tree(), 'idle_frame')
+		return PoolByteArray()
 
 	if not guild.icon:
 		push_error('Guild has no icon set.')
-		return null
+		yield(get_tree(), 'idle_frame')
+		return PoolByteArray()
 
 	if size != 256:
 		assert(size in GUILD_ICON_SIZES, 'Invalid size for guild icon provided')
@@ -524,6 +527,12 @@ func _handle_events(dict: Dictionary) -> void:
 
 			# Update cache
 			guilds[guild.id] = guild
+
+		'GUILD_UPDATE':
+			var guild = dict.d
+			_clean_guilds([guild])
+			guilds[guild.id] = guild
+			emit_signal('guild_update', self, guild)
 
 		'GUILD_DELETE':
 			var guild = dict.d

@@ -6,6 +6,9 @@ project.godot
 icon.png
 icon.png.import
 
+# Documentation build
+site/
+
 # Godot-specific ignores
 .import/
 export.cfg
