@@ -1079,11 +1079,10 @@ func _update_presence(new_presence: Dictionary) -> void:
 # Helper functions
 func _jsonstring_to_dict(data: String) -> Dictionary:
 	var temp = null
-	if (!data.empty()):
-		var json_parsed = JSON.parse(data)
-		return json_parsed.result
-	else:
+	if (data.empty()):
 		return temp
+	var json_parsed = JSON.parse(data)
+	return json_parsed.result
 
 
 func _setup_heartbeat_timer(interval: int) -> void:
