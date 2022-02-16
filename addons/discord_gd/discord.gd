@@ -852,7 +852,7 @@ func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []) ->
 	assert(data[0] == HTTPRequest.RESULT_SUCCESS)
 	if method == HTTPClient.METHOD_GET:
 		var response = _jsonstring_to_dict(data[3].get_string_from_utf8())
-		if response.has('code'):
+		if response != null and response.has('code'):
 			# Got an error
 			print('GET: status code ', str(data[1]))
 			print('Error sending GET request: ' + JSON.print(response, '\t'))
@@ -1078,6 +1078,9 @@ func _update_presence(new_presence: Dictionary) -> void:
 
 # Helper functions
 func _jsonstring_to_dict(data: String) -> Dictionary:
+	var temp = null
+	if (data.empty()):
+		return temp
 	var json_parsed = JSON.parse(data)
 	return json_parsed.result
 
