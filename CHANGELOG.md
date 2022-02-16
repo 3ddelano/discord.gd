@@ -4,6 +4,11 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
+Master
+------
+- Fix JSON parsing error on empty data object in `DiscordBot._jsonstring_to_dict()`
+- Add not null check in DiscordBot._send_get()
+
 1.2.1
 ------
 - Fixed Embed.set_color() for an array of RGB values
