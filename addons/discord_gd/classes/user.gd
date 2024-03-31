@@ -128,7 +128,7 @@ func _init(_client, user):
 		flags = user.flags
 
 	if user.has('premium_type') and user.premium_type != null:
-		assert(Helpers.is_num(user.premium), 'premium_type attribute of User must be int')
+		assert(Helpers.is_num(user.premium_type), 'premium_type attribute of User must be int')
 		premium_type = user.premium_type
 
 	if user.has('public_flags') and user.public_flags != null:
