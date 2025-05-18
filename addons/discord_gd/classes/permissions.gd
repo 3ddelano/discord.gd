@@ -4,7 +4,7 @@ Represents a bitfield of Discord permissions.
 """
 
 var ALL
-var DEFAULT = 104324673
+const DEFAULT = 104324673
 
 
 func _init(bits = default_bit):

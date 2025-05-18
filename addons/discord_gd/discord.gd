@@ -192,6 +192,37 @@ func unban_member(guild_id: String, user_id: String):
 	return res
 
 
+func create_role(guild_id: String, p_opts: Dictionary):
+	var opts = {
+		name = "new role",
+		permissions = Permissions.DEFAULT, # Permissions object
+		color = 0,
+		hoist = false,
+		icon = null, # String
+		unicode_emoji = null, # String
+		mentionable = false
+	}
+	
+	for key in p_opts:
+		opts[key] = p_opts[key]
+	
+	if opts.permissions is Permissions:
+		opts.permissions = opts.permissions.value_of()
+	var res = yield(_send_request('/guilds/%s/roles' % [guild_id], opts, HTTPClient.METHOD_POST), 'completed')
+	return res
+
+
+func update_role(guild_id: String, role_id: String, opts: Dictionary):
+	if opts.has("permissions") and opts.permissions is Permissions:
+		opts.permissions = opts.permissions.value_of()
+	
+	var res = yield(_send_request('/guilds/%s/roles/%s' % [guild_id, role_id], opts, HTTPClient.METHOD_PATCH), 'completed')
+	return res
+
+func delete_role(guild_id: String, role_id: String):
+	var res = yield(_send_request('/guilds/%s/roles/%s' % [guild_id, role_id], {}, HTTPClient.METHOD_DELETE), 'completed')
+	return res
+
 func set_presence(p_options: Dictionary) -> void:
 	"""
 		p_options {
