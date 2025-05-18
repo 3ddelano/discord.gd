@@ -172,13 +172,23 @@ func create_dm_channel(user_id: String) -> Dictionary:
 	return res
 
 
-func remove_member_role(guild_id: String, member_id: String, role_id: String):
-	var res = yield(_send_get('/guilds/%s/members/%s/roles/%s' % [guild_id, member_id, role_id], HTTPClient.METHOD_DELETE), 'completed')
+func remove_member_role(guild_id: String, user_id: String, role_id: String):
+	var res = yield(_send_get('/guilds/%s/members/%s/roles/%s' % [guild_id, user_id, role_id], HTTPClient.METHOD_DELETE), 'completed')
 	return res
 
 
-func add_member_role(guild_id: String, member_id: String, role_id: String):
-	var res = yield(_send_request('/guilds/%s/members/%s/roles/%s' % [guild_id, member_id, role_id], {}, HTTPClient.METHOD_PUT), 'completed')
+func add_member_role(guild_id: String, user_id: String, role_id: String):
+	var res = yield(_send_request('/guilds/%s/members/%s/roles/%s' % [guild_id, user_id, role_id], {}, HTTPClient.METHOD_PUT), 'completed')
+	return res
+
+
+func ban_member(guild_id: String, user_id: String, opts = {delete_message_seconds = 0}):
+	var res = yield(_send_request('/guilds/%s/bans/%s' % [guild_id, user_id], opts, HTTPClient.METHOD_PUT), 'completed')
+	return res
+
+
+func unban_member(guild_id: String, user_id: String):
+	var res = yield(_send_request('/guilds/%s/bans/%s' % [guild_id, user_id], {}, HTTPClient.METHOD_DELETE), 'completed')
 	return res
 
 
