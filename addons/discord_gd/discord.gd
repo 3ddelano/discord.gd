@@ -133,6 +133,47 @@ func start_thread(message: Message, thread_name: String, duration: int = 60 * 24
 	return res
 
 
+# See https://discord.com/developers/docs/resources/guild#create-guild-channel
+# All parameters are optional and nullable excluding data.name
+func create_channel(guild_id: String, data: Dictionary) -> Dictionary:
+	var res = yield(_send_request('/guilds/%s/channels' % guild_id, data), 'completed')
+	return res
+
+
+# See https://discord.com/developers/docs/resources/channel#get-channel
+func get_channel(channel_id: String) -> Dictionary:
+	var res = yield(_send_get('/channels/%s' % channel_id), 'completed')
+	return res
+
+
+# See https://discord.com/developers/docs/resources/channel#modify-channel
+func update_channel(channel_id: String, data: Dictionary) -> Dictionary:
+	var res = yield(_send_request('/channels/%s' % channel_id, data, HTTPClient.METHOD_PATCH), 'completed')
+	return res
+
+
+# See https://discord.com/developers/docs/resources/channel#deleteclose-channel
+func delete_channel(channel_id: String):
+	var res = yield(_send_request('/channels/%s' % channel_id, {}, HTTPClient.METHOD_DELETE), 'completed')
+	return res
+
+
+# See https://discord.com/developers/docs/resources/message#get-channel-messages
+# The before, after, and around parameters are mutually exclusive, only one may be passed at a time.
+	
+func get_channel_messages(channel_id: String, limit := 50, filter_type := "", filter_value := ""):
+	if filter_type != "":
+		assert(filter_type in ["before", "after", "around"], "Invalid filter type: %s, Expected: before, after, around" % filter_type)
+		assert(filter_value != "", "Filter value must not be empty")
+		return yield(_send_get('/channels/%s/messages?limit=%s&%s=%s' % [channel_id, limit, filter_type, filter_value]), 'completed')
+	return yield(_send_get('/channels/%s/messages?limit=%s' % [channel_id, limit]), 'completed')
+
+
+# See https://discord.com/developers/docs/resources/message#get-channel-message
+func get_channel_message(channel_id: String, message_id: String) -> Message:
+	var res = yield(_send_get('/channels/%s/messages/%s' % [channel_id, message_id]), 'completed')
+	return res
+
 func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 	assert(Helpers.is_valid_str(guild_id), 'Invalid Type: guild_id must be a valid String')
 
