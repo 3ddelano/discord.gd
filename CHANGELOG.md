@@ -4,7 +4,7 @@ Changelog
 This is a high-level changelog for each released versions of the plugin.
 For a more detailed list of past and incoming changes, see the commit history.
 
-Main
+1.2.3
 ------
 - Added `create_channel`, `get_channel`, `update_channel` and `delete_channel` to `DiscordBot`
 - Added `get_channel_messages`, `get_channel_message` to `DiscordBot`
