@@ -10,6 +10,8 @@ Discord.gd
 <br>
 <img alt="Godot3" src="https://img.shields.io/badge/-Godot 3.x-478CBF?style=for-the-badge&logo=godotengine&logoWidth=20&logoColor=white" />
 
+![Make Discord bots in Godot image](https://raw.githubusercontent.com/3ddelano/discord.gd/refs/heads/main/discord_gd_thumbnail.jpg)
+
 Features
 --------------
 
