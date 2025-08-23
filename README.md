@@ -23,7 +23,7 @@ Features
 - Uses coroutine async functions i.e Promises
 
 
-## [🚀 Check out out GDAI MCP from the creator of EOSG](https://gdaimcp.com?ref=discordgd-readme)
+## [🚀 Check out out GDAI MCP from the creator of Discord.gd](https://gdaimcp.com?ref=discordgd-readme)
 <a href="https://gdaimcp.com?ref=discordgd-readme" target="_blank">
 <img src="https://gdaimcp.com/images/og/gdai-mcp.png" width="400" />
 </a>
