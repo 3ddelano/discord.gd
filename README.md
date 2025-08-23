@@ -24,7 +24,7 @@ Features
 
 
 ## [🚀 Check out out GDAI MCP from the creator of EOSG](https://gdaimcp.com?ref=discordgd-readme)
-<a href="https://gdaimcp.com?ref=eosg-readme" target="_blank">
+<a href="https://gdaimcp.com?ref=discordgd-readme" target="_blank">
 <img src="https://gdaimcp.com/images/og/gdai-mcp.png" width="400" />
 </a>
 
