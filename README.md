@@ -23,6 +23,18 @@ Features
 - Uses coroutine async functions i.e Promises
 
 
+## [🚀 Check out out GDAI MCP from the creator of EOSG](https://gdaimcp.com?ref=discordgd-readme)
+<a href="https://gdaimcp.com?ref=eosg-readme" target="_blank">
+<img src="https://gdaimcp.com/images/og/gdai-mcp.png" width="400" />
+</a>
+
+Supercharge your Godot 4.2+ workflow with GDAI MCP – the ultimate Godot MCP server that lets AI tools like Claude, Cursor, Windsurf, VSCode and more automate scene creation, node editing, reading godot errors, creating scripts, debugging, and more.
+
+Vibe code like never before!
+
+### 🔗 **[https://gdaimcp.com](https://gdaimcp.com?ref=discordgd-readme)**
+
+
 Installation
 --------------
 
