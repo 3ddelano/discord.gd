@@ -4,11 +4,13 @@ class_name DiscordBot
 
 """
 Main script for discord.gd plugin
-Copyright 2021, Delano Lourenco
+Copyright 2021-present, Delano Lourenco
 For Copyright and License: See LICENSE.md
 """
 
-# Public Variables
+
+#region Public Variables
+
 var TOKEN: String
 var VERBOSE: bool = false
 var INTENTS: int = 513
@@ -20,7 +22,12 @@ var guilds = {}
 var channels = {}
 var users = {}
 
-# Signals
+#endregion
+
+
+
+#region Signals
+
 signal bot_ready(bot)  # bot: DiscordBot
 signal guild_create(bot, guild)  # bot: DiscordBot, guild: Dictionary
 signal guild_update(bot, guild)  # bot: DiscordBot, guild: Dictionary
@@ -33,7 +40,12 @@ signal message_reaction_remove(bot, data) # bot: DiscordBot, data: Dictionary
 signal message_reaction_remove_all(bot, data) # bot: DiscordBot, data: Dictionary
 signal message_reaction_remove_emoji(bot, data) # bot: DiscordBot, data: Dictionary
 
-# Private Variables
+#endregion
+
+
+
+
+#region Private Variables
 var _gateway_base = 'wss://gateway.discord.gg/?v=9&encoding=json'
 var _https_domain = 'https://discord.com'
 var _api_slug = '/api/v9'
@@ -48,6 +60,10 @@ var _heartbeat_interval: int
 var _heartbeat_ack_received = true
 var _login_error
 var _logged_in = false
+
+#endregion
+
+
 
 # Count of the number of guilds initially loaded
 var guilds_loaded = 0
@@ -97,6 +113,9 @@ func login() -> void:
 	return
 
 
+
+#region messages
+
 func send(messageorchannelid, content, options: Dictionary = {}) -> Message:
 	# channel
 	var res = yield(_send_message_request(messageorchannelid, content, options), 'completed')
@@ -120,6 +139,11 @@ func delete(message: Message):
 	var res = yield(_send_message_request(message, '', {}, HTTPClient.METHOD_DELETE), 'completed')
 	return res
 
+#endregion
+
+
+
+#region threads
 
 func start_thread(message: Message, thread_name: String, duration: int = 60 * 24) -> Dictionary:
 	var payload = {'name': thread_name, 'auto_archive_duration': duration}
@@ -132,6 +156,11 @@ func start_thread(message: Message, thread_name: String, duration: int = 60 * 24
 
 	return res
 
+#endregion
+
+
+
+#region channels
 
 # See https://discord.com/developers/docs/resources/guild#create-guild-channel
 # All parameters are optional and nullable excluding data.name
@@ -160,7 +189,6 @@ func delete_channel(channel_id: String):
 
 # See https://discord.com/developers/docs/resources/message#get-channel-messages
 # The before, after, and around parameters are mutually exclusive, only one may be passed at a time.
-	
 func get_channel_messages(channel_id: String, limit := 50, filter_type := "", filter_value := ""):
 	if filter_type != "":
 		assert(filter_type in ["before", "after", "around"], "Invalid filter type: %s, Expected: before, after, around" % filter_type)
@@ -173,6 +201,22 @@ func get_channel_messages(channel_id: String, limit := 50, filter_type := "", fi
 func get_channel_message(channel_id: String, message_id: String) -> Message:
 	var res = yield(_send_get('/channels/%s/messages/%s' % [channel_id, message_id]), 'completed')
 	return res
+
+
+func create_dm_channel(user_id: String) -> Dictionary:
+	var res = yield(_send_request('/users/@me/channels', {'recipient_id': user_id}), 'completed')
+	return res
+
+
+func permissions_in(channel_id: String):
+	# Permissions for the bot in a channel
+	return permissions_for(user.id, channel_id)
+
+#endregion
+
+
+
+#region guilds
 
 func get_guild_icon(guild_id: String, size: int = 256) -> PoolByteArray:
 	assert(Helpers.is_valid_str(guild_id), 'Invalid Type: guild_id must be a valid String')
@@ -207,11 +251,11 @@ func get_guild_member(guild_id: String, member_id: String) -> Dictionary:
 	var member = yield(_send_get('/guilds/%s/members/%s' % [guild_id, member_id]), 'completed')
 	return member
 
+#endregion
 
-func create_dm_channel(user_id: String) -> Dictionary:
-	var res = yield(_send_request('/users/@me/channels', {'recipient_id': user_id}), 'completed')
-	return res
 
+
+#region guild member
 
 func remove_member_role(guild_id: String, user_id: String, role_id: String):
 	var res = yield(_send_get('/guilds/%s/members/%s/roles/%s' % [guild_id, user_id, role_id], HTTPClient.METHOD_DELETE), 'completed')
@@ -232,6 +276,66 @@ func unban_member(guild_id: String, user_id: String):
 	var res = yield(_send_request('/guilds/%s/bans/%s' % [guild_id, user_id], {}, HTTPClient.METHOD_DELETE), 'completed')
 	return res
 
+
+func permissions_for(user_id: String, channel_id: String):
+	# Permissions for a user in a channel
+	if not channels.has(channel_id):
+		push_error('Channel with the id' + channel_id + ' not found.')
+		return Permissions.new(Permissions.new().ALL)
+
+	var channel = channels[channel_id]
+	var guild = guilds[channel.guild_id]
+
+	# Check for guild owner
+	if user_id == guild.owner_id:
+		return Permissions.new(Permissions.new().ALL)
+
+	# @everyone base role
+	var permissions = Permissions.new(guild.roles[guild.id].permissions)
+	if not guild.members.has(user_id):
+		push_warning('Member not found in cached members. Make sure the GUILD_MEMBERS intent is setup.')
+		return permissions
+
+	var role_ids = guild.members[user_id].roles
+
+	# Apply member global roles
+	for role_id in role_ids:
+		permissions.add(guild.roles[role_id].permissions)
+
+	if permissions.has('ADMINISTRATOR'):
+		return Permissions.new(Permissions.new().ALL)
+
+	var overwrites = channel.permission_overwrites
+
+	# Apply @everyone overwrite
+	for overwrite in overwrites:
+		if overwrite.id == guild.id:
+			permissions.remove(overwrite.deny)
+			permissions.add(overwrite.allow)
+			break
+
+	# Apply member roles overwrite
+	for overwrite in overwrites:
+		if overwrite.id in role_ids:
+			permissions.remove(overwrite.deny)
+	for overwrite in overwrites:
+		if overwrite.id in role_ids:
+			permissions.add(overwrite.allow)
+
+	# Apply user overwrite
+	for overwrite in overwrites:
+		if overwrite.id == user_id:
+			permissions.remove(overwrite.deny)
+			permissions.add(overwrite.allow)
+			break
+
+	return permissions
+
+#endregion
+
+
+
+#region roles
 
 func create_role(guild_id: String, p_opts: Dictionary):
 	var opts = {
@@ -260,64 +364,16 @@ func update_role(guild_id: String, role_id: String, opts: Dictionary):
 	var res = yield(_send_request('/guilds/%s/roles/%s' % [guild_id, role_id], opts, HTTPClient.METHOD_PATCH), 'completed')
 	return res
 
+
 func delete_role(guild_id: String, role_id: String):
 	var res = yield(_send_request('/guilds/%s/roles/%s' % [guild_id, role_id], {}, HTTPClient.METHOD_DELETE), 'completed')
 	return res
 
-func set_presence(p_options: Dictionary) -> void:
-	"""
-		p_options {
-			status: String, text of the presence,
-			afk: bool, whether or not the client is afk,
+#endregion
 
-			activity: {
-				type: String, type of the presence,
-				name: String, name of the presence,
-				url: String, url of the presence,
-				created_at: int, unix timestamp (in milliseconds) of when activity was added to user's session
-			}
-		}
-	"""
 
-	var new_presence = {'status': 'online', 'afk': false, 'activity': {}}
 
-	assert(p_options, 'Missing options for set_presence')
-	assert(
-		typeof(p_options) == TYPE_DICTIONARY,
-		'Invalid Type: options in set_presence must be a Dictionary'
-	)
-
-	if p_options.has('status') and Helpers.is_valid_str(p_options.status):
-		assert(
-			str(p_options.status).to_upper() in PRESENCE_STATUS_TYPES,
-			'Invalid Type: status must be one of PRESENCE_STATUS_TYPES'
-		)
-		new_presence.status = p_options.status.to_lower()
-	if p_options.has('afk') and typeof(p_options.afk) == TYPE_BOOL:
-		new_presence.afk = p_options.afk
-
-	# Check if an activity was passed
-	if p_options.has('activity') and typeof(p_options.activity) == TYPE_DICTIONARY:
-		if p_options.activity.has('name') and Helpers.is_valid_str(p_options.activity.name):
-			new_presence.activity.name = p_options.activity.name
-
-		if p_options.activity.has('url') and Helpers.is_valid_str(p_options.activity.url):
-			new_presence.activity.url = p_options.activity.url
-
-		if p_options.activity.has('created_at') and Helpers.is_num(p_options.activity.created_at):
-			new_presence.activity.created_at = p_options.activity.created_at
-		else:
-			new_presence.activity.created_at = OS.get_unix_time() * 1000
-
-		if p_options.activity.has('type') and Helpers.is_valid_str(p_options.activity.type):
-			assert(
-				str(p_options.activity.type).to_upper() in ACTIVITY_TYPES,
-				'Invalid Type: type must be one of ACTIVITY_TYPES'
-			)
-			new_presence.activity.type = ACTIVITY_TYPES[str(p_options.activity.type).to_upper()]
-
-	_update_presence(new_presence)
-
+#region reactions
 
 # ONLY custom emojis will work, pass in only the Id of the emoji to the custom_emoji
 func create_reaction(messageordict, custom_emoji: String) -> int:
@@ -370,6 +426,11 @@ func get_reactions(messageordict, custom_emoji: String):
 	var ret = yield(_send_get('/channels/%s/messages/%s/reactions/%s' % [messageordict.channel_id, messageordict.id, custom_emoji]), 'completed')
 	return ret
 
+#endregion
+
+
+
+#region commands
 
 func register_command(command: ApplicationCommand, guild_id: String = '') -> ApplicationCommand:
 	var slug = '/applications/%s' % application.id
@@ -454,9 +515,67 @@ func get_commands(guild_id: String = '') -> Array:
 		cmds[i] = ApplicationCommand.new(cmds[i])
 	return cmds
 
+#endregion
 
 
-# Private Functions
+func set_presence(p_options: Dictionary) -> void:
+	"""
+		p_options {
+			status: String, text of the presence,
+			afk: bool, whether or not the client is afk,
+
+			activity: {
+				type: String, type of the presence,
+				name: String, name of the presence,
+				url: String, url of the presence,
+				created_at: int, unix timestamp (in milliseconds) of when activity was added to user's session
+			}
+		}
+	"""
+
+	var new_presence = {'status': 'online', 'afk': false, 'activity': {}}
+
+	assert(p_options, 'Missing options for set_presence')
+	assert(
+		typeof(p_options) == TYPE_DICTIONARY,
+		'Invalid Type: options in set_presence must be a Dictionary'
+	)
+
+	if p_options.has('status') and Helpers.is_valid_str(p_options.status):
+		assert(
+			str(p_options.status).to_upper() in PRESENCE_STATUS_TYPES,
+			'Invalid Type: status must be one of PRESENCE_STATUS_TYPES'
+		)
+		new_presence.status = p_options.status.to_lower()
+	if p_options.has('afk') and typeof(p_options.afk) == TYPE_BOOL:
+		new_presence.afk = p_options.afk
+
+	# Check if an activity was passed
+	if p_options.has('activity') and typeof(p_options.activity) == TYPE_DICTIONARY:
+		if p_options.activity.has('name') and Helpers.is_valid_str(p_options.activity.name):
+			new_presence.activity.name = p_options.activity.name
+
+		if p_options.activity.has('url') and Helpers.is_valid_str(p_options.activity.url):
+			new_presence.activity.url = p_options.activity.url
+
+		if p_options.activity.has('created_at') and Helpers.is_num(p_options.activity.created_at):
+			new_presence.activity.created_at = p_options.activity.created_at
+		else:
+			new_presence.activity.created_at = OS.get_unix_time() * 1000
+
+		if p_options.activity.has('type') and Helpers.is_valid_str(p_options.activity.type):
+			assert(
+				str(p_options.activity.type).to_upper() in ACTIVITY_TYPES,
+				'Invalid Type: type must be one of ACTIVITY_TYPES'
+			)
+			new_presence.activity.type = ACTIVITY_TYPES[str(p_options.activity.type).to_upper()]
+
+	_update_presence(new_presence)
+
+
+
+#region Inbuilt Functions
+
 func _ready() -> void:
 	randomize()
 
@@ -471,6 +590,27 @@ func _ready() -> void:
 	_client.connect('data_received', self, '_data_received')
 
 	$HeartbeatTimer.connect('timeout', self, '_send_heartbeat')
+
+
+func _process(_delta) -> void:
+	# Run only when in game and not in the editor
+	if not Engine.is_editor_hint():
+		# Poll the web socket if connected otherwise reconnect
+		var is_connected = (
+			_client.get_connection_status()
+			!= NetworkedMultiplayerPeer.CONNECTION_DISCONNECTED
+		)
+		if is_connected:
+			_client.poll()
+
+		elif _logged_in:
+			_client.connect_to_url(_gateway_base)
+
+#endregion
+
+
+
+#region Private Functions
 
 
 func _generate_timer_nodes() -> void:
@@ -545,21 +685,6 @@ func _data_received() -> void:
 		'0':
 			# Event Dispatched
 			_handle_events(dict)
-
-
-func _process(_delta) -> void:
-	# Run only when in game and not in the editor
-	if not Engine.is_editor_hint():
-		# Poll the web socket if connected otherwise reconnect
-		var is_connected = (
-			_client.get_connection_status()
-			!= NetworkedMultiplayerPeer.CONNECTION_DISCONNECTED
-		)
-		if is_connected:
-			_client.poll()
-
-		elif _logged_in:
-			_client.connect_to_url(_gateway_base)
 
 
 func _send_heartbeat() -> void:  # Send heartbeat OP code 1
@@ -715,64 +840,6 @@ func _handle_events(dict: Dictionary) -> void:
 			var interaction = DiscordInteraction.new(self, d)
 			emit_signal('interaction_create', self, interaction)
 
-
-func permissions_in(channel_id: String):
-	# Permissions for the bot in a channel
-	return permissions_for(user.id, channel_id)
-
-func permissions_for(user_id: String, channel_id: String):
-	# Permissions for a user in a channel
-	if not channels.has(channel_id):
-		push_error('Channel with the id' + channel_id + ' not found.')
-		return Permissions.new(Permissions.new().ALL)
-
-	var channel = channels[channel_id]
-	var guild = guilds[channel.guild_id]
-
-	# Check for guild owner
-	if user_id == guild.owner_id:
-		return Permissions.new(Permissions.new().ALL)
-
-	# @everyone base role
-	var permissions = Permissions.new(guild.roles[guild.id].permissions)
-	if not guild.members.has(user_id):
-		push_warning('Member not found in cached members. Make sure the GUILD_MEMBERS intent is setup.')
-		return permissions
-
-	var role_ids = guild.members[user_id].roles
-
-	# Apply member global roles
-	for role_id in role_ids:
-		permissions.add(guild.roles[role_id].permissions)
-
-	if permissions.has('ADMINISTRATOR'):
-		return Permissions.new(Permissions.new().ALL)
-
-	var overwrites = channel.permission_overwrites
-
-	# Apply @everyone overwrite
-	for overwrite in overwrites:
-		if overwrite.id == guild.id:
-			permissions.remove(overwrite.deny)
-			permissions.add(overwrite.allow)
-			break
-
-	# Apply member roles overwrite
-	for overwrite in overwrites:
-		if overwrite.id in role_ids:
-			permissions.remove(overwrite.deny)
-	for overwrite in overwrites:
-		if overwrite.id in role_ids:
-			permissions.add(overwrite.allow)
-
-	# Apply user overwrite
-	for overwrite in overwrites:
-		if overwrite.id == user_id:
-			permissions.remove(overwrite.deny)
-			permissions.add(overwrite.allow)
-			break
-
-	return permissions
 
 func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD_POST):
 	var headers = _headers.duplicate(true)
@@ -1246,3 +1313,5 @@ func _parse_message(message: Dictionary):
 		message.author = User.new(self, message.author)
 
 	return 1
+
+#endregion
