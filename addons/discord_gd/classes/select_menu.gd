@@ -3,14 +3,14 @@ class_name SelectMenu
 Represents a Discord select menu.
 """
 
-var custom_id: String setget set_custom_id, get_custom_id
-var placeholder: String setget set_placeholder, get_placeholder
-var options: Array setget set_options, get_options
+var custom_id: String: set = set_custom_id, get = get_custom_id
+var placeholder: String: set = set_placeholder, get = get_placeholder
+var options: Array: set = set_options, get = get_options
 
-var min_values = 1 setget set_min_values, get_min_values
-var max_values = 1 setget set_max_values, get_max_values
+var min_values = 1: set = set_min_values, get = get_min_values
+var max_values = 1: set = set_max_values, get = get_max_values
 
-var disabled: bool = false setget set_disabled, get_disabled
+var disabled: bool = false: set = set_disabled, get = get_disabled
 
 var type: int = 3
 
@@ -19,6 +19,7 @@ func set_custom_id(new_custom_id):
 	Helpers.assert_length(new_custom_id, 100, 'custom_id of SelectMenu cannot be more than 100 characters.')
 	custom_id = new_custom_id
 	return self
+
 
 func get_custom_id() -> String:
 	return custom_id
@@ -54,9 +55,11 @@ func add_option(value: String, label: String, data: Dictionary = {}):
 
 	return self
 
+
 func set_options(new_options: Array):
 	options = new_options
 	return self
+
 
 func get_options() -> Array:
 	return options
@@ -67,6 +70,7 @@ func set_placeholder(new_placeholder: String):
 	placeholder = new_placeholder
 	return self
 
+
 func get_placeholder() -> String:
 	return placeholder
 
@@ -75,6 +79,7 @@ func set_min_values(new_min_values: int):
 	assert(new_min_values <= 25, 'min_values of SelectMenu cannot be more than 25')
 	min_values = new_min_values
 	return self
+
 
 func get_min_values() -> int:
 	return min_values
@@ -97,15 +102,13 @@ func get_disabled() -> bool:
 	return disabled
 
 
-
-func _init():
-	return self
-
 func _to_string(pretty: bool = false) -> String:
-	return JSON.print(_to_dict(), '\t') if pretty else JSON.print(_to_dict())
+	return JSON.stringify(_to_dict(), '\t') if pretty else JSON.stringify(_to_dict())
+
 
 func print():
 	print(_to_string(true))
+
 
 func _to_dict() -> Dictionary:
 	# Default style is primary

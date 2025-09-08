@@ -5,9 +5,6 @@ Represnts a Discord message action row which has components
 
 var components: Array
 
-func _init():
-	return self
-
 
 func add_component(component, index = -1):
 	assert(components.size() + 1 <= 5, 'MessageActionRow cannot have more than 5 components.')
@@ -37,7 +34,7 @@ func slice_components(index: int, delete_count: int = 1, replace_components: Arr
 	assert(delete_count <= max_deletable, 'delete_count out of bounds in MessageActionRow.slice_components')
 
 	while delete_count != 0:
-		components.remove(index)
+		components.remove_at(index)
 		delete_count -= 1
 
 	if replace_components.size() != 0:
@@ -51,7 +48,7 @@ func slice_components(index: int, delete_count: int = 1, replace_components: Arr
 
 
 func _to_string(pretty: bool = false) -> String:
-	return JSON.print(_to_dict(), '\t') if pretty else JSON.print(_to_dict())
+	return JSON.stringify(_to_dict(), '\t') if pretty else JSON.stringify(_to_dict())
 
 
 func print():

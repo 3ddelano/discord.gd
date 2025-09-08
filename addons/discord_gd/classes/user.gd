@@ -61,17 +61,13 @@ func get_default_avatar_url() -> String:
 	return client._cdn_base + '/embed/avatars/%s.png' % moduloed_discriminator
 
 
-func get_display_avatar(options: Dictionary = {}) -> PoolByteArray:
-	var png_bytes = yield(
-		client._send_get_cdn(get_display_avatar_url(options)), 'completed'
-	)
+func get_display_avatar(options: Dictionary = {}) -> PackedByteArray:
+	var png_bytes = await client._send_get_cdn(get_display_avatar_url(options))
 	return png_bytes
 
 
-func get_default_avatar() -> PoolByteArray:
-	var png_bytes = yield(
-		client._send_get_cdn(get_default_avatar_url()), 'completed'
-	)
+func get_default_avatar() -> PackedByteArray:
+	var png_bytes = await client._send_get_cdn(get_default_avatar_url())
 	return png_bytes
 
 
@@ -151,7 +147,7 @@ func _to_string(pretty: bool = false):
 		'premium_type': premium_type,
 		'public_flags': public_flags
 	}
-	return JSON.print(data, '\t') if pretty else JSON.print(data)
+	return JSON.stringify(data, '\t') if pretty else JSON.stringify(data)
 
 func print():
 	print(_to_string(true))

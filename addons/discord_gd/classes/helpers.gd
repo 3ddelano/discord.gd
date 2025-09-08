@@ -6,7 +6,7 @@ used by discord.gd plugin
 
 # Returns true if value if an int or real float
 static func is_num(value) -> bool:
-	return typeof(value) == TYPE_INT or typeof(value) == TYPE_REAL
+	return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 
 
 # Returns true if value is a string
@@ -20,7 +20,7 @@ static func is_valid_str(value) -> bool:
 
 
 # Return a ISO 8601 timestamp as a String
-static func make_iso_string(datetime: Dictionary = OS.get_datetime(true)) -> String:
+static func make_iso_string(datetime: Dictionary = Time.get_datetime_dict_from_system(true)) -> String:
 	var iso_string = '%s-%02d-%02dT%02d:%02d:%02d' % [datetime.year, datetime.month, datetime.day, datetime.hour, datetime.minute, datetime.second]
 
 	return iso_string
@@ -28,21 +28,20 @@ static func make_iso_string(datetime: Dictionary = OS.get_datetime(true)) -> Str
 
 # Pretty prints a Dictionary
 static func print_dict(d: Dictionary) -> void:
-	print(JSON.print(d, '\t'))
+	print(JSON.stringify(d, '\t'))
 
 
 # Saves a Dictionary to a file for debugging large dictionaries
 static func save_dict(d: Dictionary, filename = 'saved_dict') -> void:
 	assert(typeof(d) == TYPE_DICTIONARY, 'type of d is not Dictionary in save_dict')
-	var file = File.new()
-	file.open('user://%s%s.json' % [filename, str(OS.get_ticks_msec())], File.WRITE)
-	file.store_string(JSON.print(d, '\t'))
+	var file = FileAccess.open('user://%s%s.json' % [filename, str(Time.get_ticks_msec())], FileAccess.WRITE)
+	file.store_string(JSON.stringify(d, '\t'))
 	file.close()
 	print('Dictionary saved to file')
 
 
 # Converts a raw image bytes to a png Image
-static func to_png_image(bytes: PoolByteArray) -> Image:
+static func to_png_image(bytes: PackedByteArray) -> Image:
 	var image = Image.new()
 	image.load_png_from_buffer(bytes)
 	return image
@@ -73,4 +72,4 @@ static func iso2unix(iso_string: String) -> int:
 		minute = time[1],
 		second = time[2],
 	}
-	return OS.get_unix_time_from_datetime(datetime)
+	return Time.get_unix_time_from_datetime_dict(datetime)

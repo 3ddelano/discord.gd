@@ -57,14 +57,14 @@ const _CHANNEL_TYPES = {
 	'GUILD_STAGE_VOICE': 13
 }
 
-var id: String setget , get_id
+var id: String: get = get_id
 var type: int = 1
-var application_id: String setget , get_application_id
-var guild_id: String setget , get_guild_id
-var name: String setget set_name, get_name
-var description: String setget set_description, get_description
+var application_id: String: get = get_application_id
+var guild_id: String: get = get_guild_id
+var name: String: set = set_name, get = get_name
+var description: String: set = set_description, get = get_description
 
-var options: Array setget set_options, get_options
+var options: Array: set = set_options, get = get_options
 var default_permission: bool = true
 var version: String
 
@@ -181,10 +181,9 @@ func _init(data: Dictionary = {}):
 	default_permission = data.default_permission if data.has('default_permission') else true
 	version = data.version if data.has('version') else ''
 
-	return self
 
 func _to_string(pretty: bool = false) -> String:
-	return JSON.print(_to_dict(), '\t') if pretty else JSON.print(_to_dict())
+	return JSON.stringify(_to_dict(), '\t') if pretty else JSON.stringify(_to_dict())
 
 func print():
 	print(_to_string(true))

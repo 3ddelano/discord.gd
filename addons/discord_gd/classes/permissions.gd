@@ -61,7 +61,6 @@ func _init(bits = default_bit):
 		prev |= value
 	ALL = prev
 
-	return self
 
 func missing(bits):
 	var BF = load('res://addons/discord_gd/classes/permissions.gd')

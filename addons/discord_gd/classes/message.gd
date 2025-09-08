@@ -161,7 +161,7 @@ func _to_string(pretty: bool = false):
 		'flags': flags.bitfield
 	}
 
-	return JSON.print(data, '\t') if pretty else JSON.print(data)
+	return JSON.stringify(data, '\t') if pretty else JSON.stringify(data)
 
 func print():
 	print(_to_string(true))
@@ -178,7 +178,7 @@ func slice_attachments(index: int, delete_count: int = 1, replace_attachments: A
 	assert(delete_count <= max_deletable, 'delete_count out of bounds in Message.attachments')
 
 	while delete_count != 0:
-		attachments.remove(index)
+		attachments.remove_at(index)
 		delete_count -= 1
 
 	if replace_attachments.size() > 0:

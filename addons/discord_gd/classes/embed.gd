@@ -5,12 +5,12 @@ and has functions to add, modify and edit
 the various properties of an Embed.
 """
 
-var title: String setget set_title, get_title
-var type: String = 'rich' setget set_type, get_type
-var description: String setget set_description, get_description
-var url: String setget set_url, get_url
-var timestamp: String setget set_timestamp, get_timestamp
-var color setget set_color, get_color
+var title: String: set = set_title, get = get_title
+var type: String = 'rich': set = set_type, get = get_type
+var description: String: set = set_description, get = get_description
+var url: String: set = set_url, get = get_url
+var timestamp: String: set = set_timestamp, get = get_timestamp
+var color: set = set_color, get = get_color
 
 var footer = null
 var image = null
@@ -19,10 +19,6 @@ var video = null
 var provider = null
 var author = null
 var fields: Array
-
-
-func _init():
-	return self
 
 
 func get_title():
@@ -187,7 +183,7 @@ func slice_fields(index: int, delete_count: int = 1, replace_fields: Array = [])
 	assert(delete_count <= max_deletable, 'delete_count out of bounds in Embed.slice_fields')
 
 	while delete_count != 0:
-		fields.remove(index)
+		fields.remove_at(index)
 		delete_count -= 1
 
 	if replace_fields.size() != 0:
@@ -203,7 +199,7 @@ func slice_fields(index: int, delete_count: int = 1, replace_fields: Array = [])
 
 
 func _to_string(pretty: bool = false) -> String:
-	return JSON.print(_to_dict(), '\t') if pretty else JSON.print(_to_dict())
+	return JSON.stringify(_to_dict(), '\t') if pretty else JSON.stringify(_to_dict())
 
 func print():
 	print(_to_string(true))
