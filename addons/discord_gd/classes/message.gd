@@ -68,8 +68,8 @@ func _init(message: Dictionary):
 	assert(message.has('channel_id') and message.channel_id and Helpers.is_valid_str(message.channel_id), 'Message must have a valid channel_id')
 	channel_id = message.channel_id
 
-	if MESSAGE_TYPES.get(str(message.type)):
-		type = MESSAGE_TYPES.get(str(message.type))
+	if MESSAGE_TYPES.get(str(int(message.type))):
+		type = MESSAGE_TYPES.get(str(int(message.type)))
 	else:
 		assert(false, 'Message must have a valid type')
 

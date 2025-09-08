@@ -22,7 +22,7 @@ func set_style(style_number: int):
 	return self
 
 
-func get_style() -> String:
+func get_style():
 	return _STYLES[_style]
 
 

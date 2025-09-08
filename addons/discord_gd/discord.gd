@@ -620,14 +620,12 @@ func _connection_closed(code: int, reason: String) -> void:
 
 
 func _data_received(msg: String) -> void:
-	if VERBOSE:
-		print("Got packet: ", msg)
+	#if VERBOSE:
+		#print("Got packet: ", msg)
 	var data := msg
 	var dict = _jsonstring_to_dict(data)
 	var op = str(int(dict.op))  # OP Code Received
 	var d = dict.d  # Data Received
-	
-	print("got op %s and data %s" % [op, d])
 	
 	match op:
 		'10':
@@ -928,8 +926,8 @@ func _send_request(slug: String, payload, method = HTTPClient.METHOD_POST):
 
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
-	http_request.call_deferred(
-		'request', _https_base + slug, headers, false, method, JSON.stringify(payload)
+	http_request.request.call_deferred(
+		_https_base + slug, headers, method, JSON.stringify(payload)
 	)
 
 	var data = await http_request.request_completed
@@ -1185,7 +1183,7 @@ func _update_presence(new_presence: Dictionary) -> void:
 
 
 # Helper functions
-func _jsonstring_to_dict(data: String) -> Dictionary:
+func _jsonstring_to_dict(data: String):
 	var json = JSON.new()
 	var result = json.parse(data)
 	
