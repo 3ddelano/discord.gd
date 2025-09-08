@@ -619,16 +619,6 @@ func _connection_closed(code: int, reason: String) -> void:
 		print('WSS connection closed with code=%s, reason=%s' % [code, reason])
 
 
-func _connection_error() -> void:
-	if VERBOSE:
-		print('WSS connection error')
-
-
-func _connection_established(protocol: String) -> void:
-	if VERBOSE:
-		print('Connected with protocol: ', protocol)
-
-
 func _data_received(msg: String) -> void:
 	if VERBOSE:
 		print("Got packet: ", msg)

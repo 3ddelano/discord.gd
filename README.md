@@ -8,9 +8,15 @@ Discord.gd
 > 100% GDScript
 
 <br>
-<img alt="Godot3" src="https://img.shields.io/badge/-Godot 3.x-478CBF?style=for-the-badge&logo=godotengine&logoWidth=20&logoColor=white" />
+<img alt="Godot4" src="https://img.shields.io/badge/-Godot 4.x-478CBF?style=for-the-badge&logo=godotengine&logoWidth=20&logoColor=white" />
 
 ![Make Discord bots in Godot image](https://raw.githubusercontent.com/3ddelano/discord.gd/refs/heads/main/discord_gd_thumbnail.jpg)
+
+
+#### Godot version compatibility
+
+- Godot 4.x - [main branch](https://github.com/3ddelano/discord.gd/tree/main)
+- Godot 3.x - [godot3 branch](https://github.com/3ddelano/discord.gd/tree/godot3)
 
 Features
 --------------
