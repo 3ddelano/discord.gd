@@ -964,12 +964,12 @@ func _get_dm_channel(channel_id: String) -> Dictionary:
 	return data
 
 
-func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []) -> Dictionary:
+func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []):
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
 
 	var headers = _headers + additional_headers
-	http_request.call_deferred('request', _https_base + slug, headers, false, method)
+	http_request.request.call_deferred(_https_base + slug, headers, method)
 
 	var data = await http_request.request_completed
 	http_request.queue_free()
