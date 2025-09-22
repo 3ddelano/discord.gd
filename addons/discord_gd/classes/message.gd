@@ -74,6 +74,7 @@ func _init(message: Dictionary):
 		assert(false, 'Message must have a valid type')
 
 	assert(message.has('author'), 'Message must have an author')
+	
 	# Check if the message is sent by webhook
 	if message.has('webhook_id') and Helpers.is_str(message.webhook_id) and message.webhook_id.length() > 0:
 		# webhook sent a message

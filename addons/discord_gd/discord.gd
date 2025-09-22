@@ -72,11 +72,13 @@ const CHANNEL_TYPES = {
 	'3': 'GROUP_DM',
 	'4': 'GUILD_CATEGORY',
 	'5': 'GUILD_NEWS',
-	'6': 'GUILD_STORE',
 	'10': 'GUILD_NEWS_THREAD',
 	'11': 'GUILD_PUBLIC_THREAD',
 	'12': 'GUILD_PRIVATE_THREAD',
-	'13': 'GUILD_STAGE_VOICE'
+	'13': 'GUILD_STAGE_VOICE',
+	'14': 'GUILD_DIRECTORY',
+	'15': 'GUILD_FORUM',
+	'16': 'GUILD_MEDIA',
 }
 
 var GUILD_ICON_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
@@ -200,6 +202,8 @@ func get_channel_message(channel_id: String, message_id: String) -> Message:
 
 func create_dm_channel(user_id: String) -> Dictionary:
 	var res = await _send_request('/users/@me/channels', {'recipient_id': user_id})
+	if typeof(res) == TYPE_DICTIONARY:
+		_clean_channel(res)
 	return res
 
 
@@ -961,6 +965,8 @@ func _send_request(slug: String, payload, method = HTTPClient.METHOD_POST):
 func _get_dm_channel(channel_id: String) -> Dictionary:
 	assert(Helpers.is_valid_str(channel_id), 'Invalid Type: channel_id must be a valid String')
 	var data = await _send_get('/channels/%s' % channel_id)
+	if typeof(data) == TYPE_DICTIONARY:
+		_clean_channel(data)
 	return data
 
 
@@ -1158,9 +1164,7 @@ func _send_message_request(
 	if method == HTTPClient.METHOD_DELETE:
 		return res
 	else:
-		var coroutine = await _parse_message(res)
-		if typeof(coroutine) == TYPE_OBJECT:
-			coroutine = await coroutine
+		await _parse_message(res)
 
 		var msg = Message.new(res)
 		return msg
@@ -1250,12 +1254,22 @@ func _clean_guilds(guilds: Array) -> void:
 
 
 func _clean_channel(channel: Dictionary) -> void:
-	if channel.has('type') and str(channel.type) in CHANNEL_TYPES.keys():
+	_float_to_int(channel, "type")
+	_float_to_int(channel, "flags")
+	if channel.has('type') and typeof(channel.type) == TYPE_INT:
 		channel.type = CHANNEL_TYPES.get(str(channel.type))
 
 
-func _parse_message(message: Dictionary):
-	assert(typeof(message) == TYPE_DICTIONARY, 'Invalid Type: message must be a Dictionary')
+func _parse_message(message):
+	if typeof(message) == TYPE_OBJECT and message is Message:
+		return message
+	
+	if typeof(message) != TYPE_DICTIONARY:
+		printerr("_parse_message error: Type of message must be dictionary")
+		return null
+	
+	_float_to_int(message, "type")
+	_float_to_int(message, "flags")
 
 	if message.has('channel_id') and message.channel_id:
 		# Check if channel is cached
@@ -1280,5 +1294,10 @@ func _parse_message(message: Dictionary):
 		message.author = User.new(self, message.author)
 
 	return 1
+
+
+func _float_to_int(dict, key):
+	if dict.has(key) and typeof(dict[key]) == TYPE_FLOAT:
+		dict[key] = int(dict[key])
 
 #endregion
