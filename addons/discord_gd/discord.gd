@@ -197,7 +197,8 @@ func get_channel_messages(channel_id: String, limit := 50, filter_type := "", fi
 # See https://discord.com/developers/docs/resources/message#get-channel-message
 func get_channel_message(channel_id: String, message_id: String) -> Message:
 	var res = await _send_get('/channels/%s/messages/%s' % [channel_id, message_id])
-	return res
+	_parse_message(res)
+	return Message.new(res)
 
 
 func create_dm_channel(user_id: String) -> Dictionary:
