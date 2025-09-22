@@ -672,7 +672,7 @@ func _data_received(msg: String) -> void:
 
 func _send_heartbeat() -> void:  # Send heartbeat OP code 1
 	if not _heartbeat_ack_received:
-		_client.disconnect_from_host(1002)
+		_client.close(1002)
 		return
 
 	var response_payload = {'op': 1, 'd': _last_seq}
