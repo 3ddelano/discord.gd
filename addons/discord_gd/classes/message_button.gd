@@ -13,7 +13,7 @@ var url: String: set = set_url, get = get_url
 var disabled: bool = false: set = set_disabled, get = get_disabled
 var emoji: Dictionary
 
-var _style: set = set_style, get = get_style
+var _style: set = set_style
 var type: int = 2
 
 
@@ -22,7 +22,7 @@ func set_style(style_number: int):
 	return self
 
 
-func get_style():
+func get_style_string():
 	return _STYLES[_style]
 
 
@@ -97,5 +97,5 @@ func _to_dict() -> Dictionary:
 			'label': label,
 			'custom_id': custom_id,
 			'disabled': disabled,
-			'emoji': emoji
+			'emoji': emoji if emoji else null
 		}
