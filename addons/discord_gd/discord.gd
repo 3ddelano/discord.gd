@@ -1166,6 +1166,10 @@ func _send_message_request(
 		return res
 	else:
 		await _parse_message(res)
+		
+		if res.has("code") and res.has("errors"):
+			# its an error
+			return res
 
 		var msg = Message.new(res)
 		return msg

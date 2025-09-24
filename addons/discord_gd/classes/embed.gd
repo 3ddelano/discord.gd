@@ -42,7 +42,7 @@ func get_timestamp():
 
 
 func get_color():
-	return color if Helpers.is_valid_str(color) else null
+	return color
 
 
 func set_title(_title):
