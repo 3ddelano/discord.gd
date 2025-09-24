@@ -35,7 +35,7 @@ var TYPES = {
 	3: 'MESSAGE_COMPONENT',
 	4: 'APPLICATION_COMMAND_AUTOCOMPLETE'
 }
-#= {'2': 'APPLICATION_COMMAND', '3': 'MESSAGE_COMPONENT', '4': 'AUTOCOMPLETE'}
+
 
 func is_command() -> bool:
 	return type == 'APPLICATION_COMMAND'
@@ -79,9 +79,7 @@ func fetch_reply(message_id: String = '@original'):
 		return
 
 	var msg = await bot._send_get('/webhooks/%s/%s/messages/%s' % [application_id, token, message_id])
-	var coroutine = bot._parse_message(msg)
-	if typeof(coroutine) == TYPE_OBJECT:
-		coroutine = await coroutine
+	await bot._parse_message(msg)
 
 	return Message.new(msg)
 
@@ -258,15 +256,8 @@ func _send_request(
 	var res
 	var coroutine = await bot._send_raw_request(slug, {'payload': payload, 'files': files}, method)
 
-	if typeof(coroutine) == TYPE_OBJECT:
-		res = await coroutine
-	else:
-		res = coroutine
-
 	if is_follow_up:
-		coroutine = bot._parse_message(res)
-		if typeof(coroutine) == TYPE_OBJECT:
-			coroutine = await coroutine
+		coroutine = await bot._parse_message(res)
 
 		return Message.new(res)
 
@@ -291,13 +282,6 @@ func _init(_bot, interaction: Dictionary):
 	token = interaction.token
 	type = TYPES[int(interaction.type)]
 
-	if interaction.has('message'):
-		var coroutine = bot._parse_message(interaction.message)
-		if typeof(coroutine) == TYPE_OBJECT:
-			coroutine = await coroutine
-
-		message = Message.new(interaction.message)
-
 	if interaction.has('member'):
 		member = interaction.member
 		# Try to parse the member permissions
@@ -319,6 +303,12 @@ func _init(_bot, interaction: Dictionary):
 		if type == 'APPLICATION_COMMAND':
 			data.type = ApplicationCommand._COMMAND_TYPES[int(data.type)]
 			data = _parse_data_options(interaction.data)
+	
+	if interaction.has('message'):
+		await bot._parse_message(interaction.message)
+
+		message = Message.new(interaction.message)
+
 
 func _parse_data_options(data, option = false):
 	if option and data.has('type'):
@@ -328,6 +318,7 @@ func _parse_data_options(data, option = false):
 		for i in range(len(data.options)):
 			data.options[i] = _parse_data_options(data.options[i], true)
 	return data
+
 
 func _to_string(pretty: bool = false) -> String:
 	return JSON.stringify(_to_dict(), '\t') if pretty else JSON.stringify(_to_dict())

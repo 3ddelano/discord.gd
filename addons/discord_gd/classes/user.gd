@@ -24,6 +24,7 @@ var client
 const AVATAR_URL_FORMATS = ['webp', 'png', 'jpg', 'jpeg', 'gif']
 const AVATAR_URL_SIZES = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 
+
 func get_display_avatar_url(options: Dictionary = {}) -> String:
 	"""
 	options {
@@ -131,6 +132,7 @@ func _init(_client, user):
 		assert(Helpers.is_num(user.public_flags), 'public_flags attribute of User must be int')
 		public_flags = user.public_flags
 
+
 func _to_string(pretty: bool = false):
 	var data = {
 		'id': id,
@@ -148,6 +150,7 @@ func _to_string(pretty: bool = false):
 		'public_flags': public_flags
 	}
 	return JSON.stringify(data, '\t') if pretty else JSON.stringify(data)
+
 
 func print():
 	print(_to_string(true))
