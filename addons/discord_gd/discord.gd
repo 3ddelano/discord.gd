@@ -1216,6 +1216,10 @@ func _setup_heartbeat_timer(interval: int) -> void:
 
 
 func _send_dict_wss(d: Dictionary) -> void:
+	if _client.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		if VERBOSE:
+			print("Failed to send packet as websocket state is not open. Got state: " + str(_client.get_ready_state()))
+		return
 	var payload = JSON.stringify(d)
 	var err = _client.put_packet(payload.to_utf8_buffer())
 	if OK != err:
