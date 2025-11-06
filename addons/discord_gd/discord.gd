@@ -779,13 +779,9 @@ func _handle_events(dict: Dictionary) -> void:
 				if d.sticker_items.size() != 0:
 					return
 
-			var coroutine = await _parse_message(d)
-			if coroutine == null:
-				# message might be a thread
-				# TODO: Handle sending messages in threads
-				return
+			await _parse_message(d)
 
-			d = Message.new(d)
+			d = Message.new(d, self)
 
 			var channel = channels.get(str(d.channel_id))
 			message_create.emit(self, d, channel)
@@ -1292,11 +1288,7 @@ func _parse_message(message):
 			channel = await _get_dm_channel(message.channel_id)
 			_clean_channel(channel)
 
-			if channel and channel.has('type') and channel.type == 'DM':
-				channels[str(message.channel_id)] = channel
-			else:
-				# not a valid channel, it might be a thread
-				return null
+			channels[str(message.channel_id)] = channel
 
 	if message.has('author') and typeof(message.author) == TYPE_DICTIONARY:
 		# get the cached author of the message
