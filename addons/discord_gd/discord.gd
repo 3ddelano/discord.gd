@@ -569,6 +569,11 @@ func set_presence(p_options: Dictionary) -> void:
 	_update_presence(new_presence)
 
 
+func trigger_typing_indicator(p_channel_id: String):
+	var res = await _send_request('/channels/%s/typing' % [p_channel_id], {}, HTTPClient.METHOD_POST)
+	return res
+
+
 
 #region Inbuilt Functions
 
