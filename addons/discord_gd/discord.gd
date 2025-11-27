@@ -585,6 +585,8 @@ func _ready() -> void:
 
 	# Setup web socket client
 	_client = WebSocketPeer.new()
+	_client.inbound_buffer_size = 4 * 1024 * 1024
+	_client.outbound_buffer_size = 4 * 1024 * 1024
 
 	$HeartbeatTimer.timeout.connect(_send_heartbeat)
 
