@@ -632,12 +632,14 @@ func _connection_closed(code: int, reason: String) -> void:
 
 
 func _data_received(msg: String) -> void:
-	#if VERBOSE:
-		#print("Got packet: ", msg)
 	var data := msg
 	var dict = _jsonstring_to_dict(data)
 	var op = str(int(dict.op))  # OP Code Received
 	var d = dict.d  # Data Received
+	
+	if VERBOSE:
+		print("Got packet op=" + op)
+		print(msg)
 	
 	match op:
 		'10':
@@ -664,7 +666,7 @@ func _data_received(msg: String) -> void:
 			# Heartbeat Acknowledged
 			_heartbeat_ack_received = true
 			if VERBOSE:
-				print('Heartbeat ack')
+				print('Heartbeat ack at ' + str(Time.get_unix_time_from_system()))
 		'9':
 			# Opcode 9 Invalid Session
 			_invalid_session_is_resumable = d
@@ -686,7 +688,7 @@ func _send_heartbeat() -> void:  # Send heartbeat OP code 1
 	_send_dict_wss(response_payload)
 	_heartbeat_ack_received = false
 	if VERBOSE:
-		print('Heartbeat sent!')
+		print('Heartbeat sent at ' + str(Time.get_unix_time_from_system()))
 
 
 func _handle_events(dict: Dictionary) -> void:
@@ -1156,12 +1158,7 @@ func _send_message_request(
 	var res
 	if payload.has('files') and payload.files and typeof(payload.files) == TYPE_ARRAY:
 		# Send raw post request using multipart/form-data
-		var coroutine = await _send_raw_request(slug, payload, method)
-		if typeof(coroutine) == TYPE_OBJECT:
-			res = await coroutine
-		else:
-			res = coroutine
-
+		res = await _send_raw_request(slug, payload, method)
 	else:
 		res = await _send_request(slug, payload, method)
 
@@ -1172,6 +1169,8 @@ func _send_message_request(
 		
 		if res.has("code") and res.has("errors"):
 			# its an error
+			return res
+		if not res.has("id"):
 			return res
 
 		var msg = Message.new(res)
@@ -1212,7 +1211,7 @@ func _jsonstring_to_dict(data: String):
 
 func _setup_heartbeat_timer(interval: int) -> void:
 	# Setup heartbeat timer and start it
-	_heartbeat_interval = int(interval) / 1000
+	_heartbeat_interval = (int(interval) / 1000) - 2
 	var timer = $HeartbeatTimer
 	timer.wait_time = _heartbeat_interval
 	timer.start()
