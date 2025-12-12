@@ -253,11 +253,10 @@ func _send_request(
 	if method == HTTPClient.METHOD_PATCH or is_follow_up:
 		payload = payload.data
 
-	var res
-	var coroutine = await bot._send_raw_request(slug, {'payload': payload, 'files': files}, method)
+	var res = await bot._send_raw_request(slug, {'payload': payload, 'files': files}, method)
 
 	if is_follow_up:
-		coroutine = await bot._parse_message(res)
+		await bot._parse_message(res)
 
 		return Message.new(res)
 
