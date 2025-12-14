@@ -6,11 +6,10 @@ class_name DiscordBot
 extends Node
 
 
-
-
 #region Constants
 
 const Gateway = preload("./gateway.gd")
+const Voice = preload("./voice.gd")
 
 const DispatchEvents = Gateway.DispatchEvents
 
@@ -47,16 +46,17 @@ const CDN_BASE_URL = 'https://cdn.discordapp.com'
 #endregion
 
 
-
-
 #region Public Variables
 
 var TOKEN: String
 var VERBOSE: bool = false
-var INTENTS: int = 513
+var INTENTS: int = 513 | 128 # GUILDS + GUILD_MESSAGES + GUILD_VOICE_STATES
 
 ## Websocket connection gateway
 var gateway: Gateway
+
+## Voice connections by guild_id
+var voice_connections: Dictionary = {}
 
 # Caches
 var user: User
@@ -68,26 +68,25 @@ var users = {}
 #endregion
 
 
-
 #region Signals
 
-signal bot_ready(bot)  # bot: DiscordBot
-signal guild_create(bot, guild)  # bot: DiscordBot, guild: Dictionary
-signal guild_update(bot, guild)  # bot: DiscordBot, guild: Dictionary
-signal guild_delete(bot, guild)  # bot: DiscordBot, guild: Dictionary
-signal message_create(bot, message, channel)  # bot: DiscordBot, message: Message, channel: Dictionary
-signal message_delete(bot, message)  # bot: DiscordBot, message: Dictionary
-signal interaction_create(bot, interaction)  # bot: DiscordBot, interaction: DiscordInteraction
+signal bot_ready(bot) # bot: DiscordBot
+signal guild_create(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal guild_update(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal guild_delete(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal message_create(bot, message, channel) # bot: DiscordBot, message: Message, channel: Dictionary
+signal message_delete(bot, message) # bot: DiscordBot, message: Dictionary
+signal interaction_create(bot, interaction) # bot: DiscordBot, interaction: DiscordInteraction
 signal message_reaction_add(bot, data) # bot: DiscordBot, data: Dictionary
 signal message_reaction_remove(bot, data) # bot: DiscordBot, data: Dictionary
 signal message_reaction_remove_all(bot, data) # bot: DiscordBot, data: Dictionary
 signal message_reaction_remove_emoji(bot, data) # bot: DiscordBot, data: Dictionary
+signal voice_state_update(bot, data) # bot: DiscordBot, data: Dictionary
+signal voice_server_update(bot, data) # bot: DiscordBot, data: Dictionary
 # Looking for more events
 # Check the bot.gateway.dispatch_event_received signal!
 
 #endregion
-
-
 
 
 #region Private Variables
@@ -97,9 +96,10 @@ var _headers: Array
 # Count of the number of guilds initially loaded
 var _guilds_loaded = 0
 
+# Pending voice connection info (waiting for VOICE_SERVER_UPDATE)
+var _pending_voice_states: Dictionary = {}
+
 #endregion
-
-
 
 
 # Public Functions
@@ -124,7 +124,6 @@ func login() -> void:
 	if err != OK:
 		_log_error(func(): return 'Failed to login: %s (%s)' % [error_string(err), err])
 		return
-
 
 
 #region messages
@@ -153,7 +152,6 @@ func delete(message: Message):
 #endregion
 
 
-
 #region threads
 
 func start_thread(message: Message, thread_name: String, duration: int = 60 * 24) -> Dictionary:
@@ -165,7 +163,6 @@ func start_thread(message: Message, thread_name: String, duration: int = 60 * 24
 	return res
 
 #endregion
-
 
 
 #region channels
@@ -226,7 +223,6 @@ func permissions_in(channel_id: String):
 #endregion
 
 
-
 #region guilds
 
 func get_guild_icon(guild_id: String, size: int = 256) -> PackedByteArray:
@@ -259,7 +255,6 @@ func get_guild_member(guild_id: String, member_id: String) -> Dictionary:
 	return member
 
 #endregion
-
 
 
 #region guild member
@@ -341,7 +336,6 @@ func permissions_for(user_id: String, channel_id: String):
 #endregion
 
 
-
 #region roles
 
 func create_role(guild_id: String, p_opts: Dictionary):
@@ -377,7 +371,6 @@ func delete_role(guild_id: String, role_id: String):
 	return res
 
 #endregion
-
 
 
 #region reactions
@@ -434,7 +427,6 @@ func get_reactions(messageordict, custom_emoji: String):
 	return ret
 
 #endregion
-
 
 
 #region commands
@@ -538,7 +530,6 @@ func get_commands(guild_id: String = '') -> Array:
 ##	}
 ## [/code]
 func set_presence(p_options: Dictionary) -> void:
-
 	var new_presence = {'status': 'online', 'afk': false, 'activity': {}}
 
 	assert(
@@ -583,6 +574,53 @@ func trigger_typing_indicator(p_channel_id: String):
 	return res
 
 
+#region Voice
+
+## Join a voice channel
+## [param guild_id]: The guild ID
+## [param channel_id]: The voice channel ID to join
+## [param self_mute]: Whether the bot should be muted
+## [param self_deaf]: Whether the bot should be deafened
+## Note: After calling this, wait for voice_server_update signal to get connection info
+func join_voice_channel(guild_id: String, channel_id: String, self_mute: bool = false, self_deaf: bool = false) -> void:
+	_log(func(): return "Requesting to join voice channel: guild=%s, channel=%s" % [guild_id, channel_id])
+	
+	# Store pending voice state to track this join request
+	_pending_voice_states[guild_id] = {
+		channel_id = channel_id,
+		self_mute = self_mute,
+		self_deaf = self_deaf
+	}
+	
+	gateway.send_voice_state_update(guild_id, channel_id, self_mute, self_deaf)
+
+
+## Leave a voice channel
+## [param guild_id]: The guild ID to leave voice in
+func leave_voice_channel(guild_id: String) -> void:
+	_log(func(): return "Leaving voice channel in guild: %s" % guild_id)
+	
+	# Clean up pending state if any
+	_pending_voice_states.erase(guild_id)
+	
+	# Disconnect voice gateway if connected
+	if voice_connections.has(guild_id):
+		var voice_client: Voice = voice_connections[guild_id]
+		voice_client.disconnect_from_voice()
+		voice_client.queue_free()
+		voice_connections.erase(guild_id)
+	
+	gateway.send_voice_state_update(guild_id, null, false, false)
+
+
+## Get a voice connection for a guild
+## [param guild_id]: The guild ID
+## Returns null if not connected to voice in that guild
+func get_voice_connection(guild_id: String) -> Voice:
+	return voice_connections.get(guild_id, null)
+
+#endregion
+
 
 #region Inbuilt Functions
 
@@ -595,7 +633,6 @@ func _ready() -> void:
 	add_child(gateway)
 
 #endregion
-
 
 
 #region Private Functions
@@ -626,6 +663,10 @@ func _on_dispatch_event_received(event_name: String, data: Dictionary):
 			_on_message_reaction_remove_emoji_event(data)
 		DispatchEvents.INTERACTION_CREATE:
 			_on_interaction_create_event(data)
+		DispatchEvents.VOICE_STATE_UPDATE:
+			_on_voice_state_update_event(data)
+		DispatchEvents.VOICE_SERVER_UPDATE:
+			_on_voice_server_update_event(data)
 
 
 func _on_ready_event(data: Dictionary):
@@ -674,7 +715,7 @@ func _on_guild_member_update_event(member: Dictionary) -> void:
 
 	# Update users cache
 	var guild_user = member.user
-	var user_id =  guild_user.id
+	var user_id = guild_user.id
 	member.erase('user')
 	users[user_id] = guild_user
 
@@ -719,6 +760,94 @@ func _on_message_reaction_remove_emoji_event(data: Dictionary) -> void:
 func _on_interaction_create_event(data: Dictionary) -> void:
 	var interaction = await DiscordInteraction.new(self, data)
 	interaction_create.emit(self, interaction)
+
+
+func _on_voice_state_update_event(data: Dictionary) -> void:
+	# Store session_id for voice connections
+	var guild_id = data.get("guild_id", "")
+	var p_user_id = data.get("user_id", "")
+	var p_session_id = data.get("session_id", "")
+	
+	_log(func(): return "Voice state update: guild=%s, user=%s, session=%s" % [guild_id, p_user_id, p_session_id])
+	
+	# Only track our own voice state
+	if user and p_user_id == user.id and guild_id != "":
+		if _pending_voice_states.has(guild_id):
+			_pending_voice_states[guild_id].session_id = p_session_id
+			_log(func(): return "Updated pending voice state with session_id: %s" % p_session_id)
+			
+			# Check if we already have server info and can now connect
+			_try_start_voice_connection(guild_id)
+	
+	voice_state_update.emit(self, data)
+
+
+func _try_start_voice_connection(guild_id: String) -> void:
+	# Only connect if we have BOTH session_id AND server info (token + endpoint)
+	if not _pending_voice_states.has(guild_id):
+		return
+	
+	var pending = _pending_voice_states[guild_id]
+	var p_session_id = pending.get("session_id", "")
+	var token = pending.get("token", "")
+	var endpoint = pending.get("endpoint", "")
+	
+	# Need all three: session_id, token, endpoint
+	if p_session_id.is_empty() or token.is_empty() or endpoint.is_empty():
+		_log(func(): return "Waiting for more voice info: session=%s, token=%s, endpoint=%s" % [
+			"yes" if p_session_id else "no",
+			"yes" if token else "no",
+			"yes" if endpoint else "no"
+		])
+		return
+	
+	_log(func(): return "Have all voice info, creating connection for guild=%s" % guild_id)
+	
+	# Clean up existing connection if any
+	if voice_connections.has(guild_id):
+		var old_voice: Voice = voice_connections[guild_id]
+		old_voice.disconnect_from_voice()
+		old_voice.queue_free()
+	
+	# Create new voice client
+	var voice_client = Voice.new()
+	voice_client.name = "VoiceConnection_%s" % guild_id
+	voice_client.VERBOSE = VERBOSE
+	add_child(voice_client)
+	
+	# Connect to voice gateway
+	var err = voice_client.connect_to_voice(endpoint, token, p_session_id, guild_id, user.id)
+	if err == OK:
+		voice_connections[guild_id] = voice_client
+		_log(func(): return "Voice connection initiated for guild=%s" % guild_id)
+	else:
+		_log_error(func(): return "Failed to connect to voice gateway: %s" % error_string(err))
+		voice_client.queue_free()
+	
+	# Clear pending state
+	_pending_voice_states.erase(guild_id)
+
+
+func _on_voice_server_update_event(data: Dictionary) -> void:
+	var guild_id = data.get("guild_id", "")
+	var token = data.get("token", "")
+	var endpoint = data.get("endpoint", "")
+	
+	_log(func(): return "Voice server update: guild=%s, endpoint=%s, token=%s..." % [
+		guild_id, endpoint, token.substr(0, 8) if token.length() > 8 else token
+	])
+	
+	# Store server info in pending state
+	if _pending_voice_states.has(guild_id) and endpoint:
+		_pending_voice_states[guild_id].token = token
+		_pending_voice_states[guild_id].endpoint = endpoint # Keep full endpoint, voice.gd handles port
+		_log(func(): return "Updated pending voice state with server info")
+		
+		# Check if we can now connect
+		_try_start_voice_connection(guild_id)
+	
+	voice_server_update.emit(self, data)
+
 
 func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.METHOD_POST):
 	var headers = _headers.duplicate(true)
@@ -800,7 +929,7 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 		http_client.poll()
 		var chunk = http_client.read_response_body_chunk()
 		if chunk.size() != 0:
-			rb = rb + chunk  # Append to read buffer.
+			rb = rb + chunk # Append to read buffer.
 
 	var response = _from_json(rb.get_string_from_utf8())
 	if response == null:
@@ -844,29 +973,29 @@ func _send_request(slug: String, payload, method = HTTPClient.METHOD_POST):
 	var response_body: PackedByteArray = data[3]
 	
 	if send_res != HTTPRequest.RESULT_SUCCESS:
-		_log_error(func (): return "Failed to send request: Failed to connect to Discord HTTPS server for slug=%s" % slug)
+		_log_error(func(): return "Failed to send request: Failed to connect to Discord HTTPS server for slug=%s" % slug)
 		return null
 
 	var response = _from_json(response_body.get_string_from_utf8())
 	if response == null:
-		_log(func (): return "Got null response for request with slug=%s, response_code=%s" % [slug, response_code])
+		_log(func(): return "Got null response for request with slug=%s, response_code=%s" % [slug, response_code])
 		if response_code >= 200 and response_code < 300:
 			return true
 		return false
 
 	if response.has("code"):
 		# Got an error
-		_log(func (): return "Got error response for request with slug=%s. See output window" % slug)
-		_log(func (): return "Response code: %s" % response_code)
-		_log(func (): return "Error: " + JSON.stringify(response, "\t"))
+		_log(func(): return "Got error response for request with slug=%s. See output window" % slug)
+		_log(func(): return "Response code: %s" % response_code)
+		_log(func(): return "Error: " + JSON.stringify(response, "\t"))
 
 	if method != HTTPClient.METHOD_DELETE:
 		if response.has("code"):
-			_log_error(func (): return "Error sending request for slug=%s\n%s" % [slug, str(response)])
+			_log_error(func(): return "Error sending request for slug=%s\n%s" % [slug, str(response)])
 
 	if response.has("retry_after"):
 		# We got ratelimited
-		_log(func (): return "Request got ratelimited for slug=%s, retrying after %d seconds" % [slug, int(response.retry_after)])
+		_log(func(): return "Request got ratelimited for slug=%s, retrying after %d seconds" % [slug, int(response.retry_after)])
 		await get_tree().create_timer(int(response.retry_after)).timeout
 		return await _send_request(slug, payload, method)
 
@@ -887,7 +1016,7 @@ func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []):
 
 	var headers = _headers + additional_headers
 
-	_log(func (): return "Sending HTTP request for slug=%s, method=%d" % [slug, method])
+	_log(func(): return "Sending HTTP request for slug=%s, method=%d" % [slug, method])
 	http_request.request.call_deferred(API_BASE_URL + slug, headers, method)
 
 	var data = await http_request.request_completed
@@ -898,18 +1027,18 @@ func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []):
 	var response_body: PackedByteArray = data[3]
 
 	if send_res != HTTPRequest.RESULT_SUCCESS:
-		_log(func (): return "Failed to send HTTP request for slug=%s, method=%d. Got result_code=%d" % [slug, method, send_res])
+		_log(func(): return "Failed to send HTTP request for slug=%s, method=%d. Got result_code=%d" % [slug, method, send_res])
 		return null
 	
 	if method == HTTPClient.METHOD_GET:
 		var response = _from_json(response_body.get_string_from_utf8())
 		if response != null and response.has('code'):
 			# Got an error
-			_log_error(func (): return "Method %d: status code %d" % [method, response_code])
-			_log_error(func (): return "Error sending HTTP request method=%d: " % method + JSON.stringify(response, '\t'))
+			_log_error(func(): return "Method %d: status code %d" % [method, response_code])
+			_log_error(func(): return "Error sending HTTP request method=%d: " % method + JSON.stringify(response, '\t'))
 		return response
 
-	else:  # Maybe a PUT/DELETE for reaction
+	else: # Maybe a PUT/DELETE for reaction
 		return data[1]
 
 
@@ -917,7 +1046,7 @@ func _send_get_cdn(slug) -> PackedByteArray:
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
 
-	_log(func (): return "Sending GET CDN request for slug=%s" % slug)
+	_log(func(): return "Sending GET CDN request for slug=%s" % slug)
 	if slug.find('/') == 0:
 		http_request.request(CDN_BASE_URL + slug, _headers)
 	else:
@@ -932,14 +1061,14 @@ func _send_get_cdn(slug) -> PackedByteArray:
 
 	# Check for errors
 	if send_res != HTTPRequest.RESULT_SUCCESS:
-		_log(func (): return "Failed to send GET CDN request: HTTP Failed")
+		_log(func(): return "Failed to send GET CDN request: HTTP Failed")
 		return PackedByteArray()
 
 	if response_code != 200:
-		_log(func (): return "HTTPS GET CDN Error: Status Code: %s" % response_code)
+		_log(func(): return "HTTPS GET CDN Error: Status Code: %s" % response_code)
 		return PackedByteArray()
 
-	_log(func (): return "Got CDN response for slug=%s" % slug)
+	_log(func(): return "Got CDN response for slug=%s" % slug)
 	return response_body
 
 
@@ -957,7 +1086,7 @@ func _send_message_request(
 
 	var slug
 	if messageorchannelid is Message:
-		slug ='/channels/%s/messages' % str(messageorchannelid.channel_id)
+		slug = '/channels/%s/messages' % str(messageorchannelid.channel_id)
 	else:
 		assert(messageorchannelid.length() > 16, 'channel_id is not valid')
 		slug = '/channels/%s/messages' % str(messageorchannelid)
@@ -981,7 +1110,7 @@ func _send_message_request(
 			content = content.substr(0, 2048)
 		payload.content = content
 
-	elif typeof(content) == TYPE_DICTIONARY:  # Check if the content is the options dictionary
+	elif typeof(content) == TYPE_DICTIONARY: # Check if the content is the options dictionary
 		options = content
 		content = null
 
@@ -1092,7 +1221,6 @@ func _send_message_request(
 	if method == HTTPClient.METHOD_DELETE:
 		return res
 	else:
-		
 		await _parse_message(res)
 		
 		if res.has("code") and res.has("errors"):
@@ -1110,7 +1238,7 @@ func _update_presence(new_presence: Dictionary) -> void:
 	var activity = new_presence.activity
 
 	var payload = {
-		op = 3,  # Presence update
+		op = 3, # Presence update
 		d = {
 			since = new_presence if new_presence.has('since') else null,
 			status = new_presence.status,
@@ -1132,14 +1260,14 @@ func _from_json(data: String) -> Variant:
 		return null
 	
 	if result != OK:
-		_log_error(func (): return "Failed to parse json: Error at line %s with msg %s for data %s" % [json.get_error_line(), json.get_error_message(), data])
+		_log_error(func(): return "Failed to parse json: Error at line %s with msg %s for data %s" % [json.get_error_line(), json.get_error_message(), data])
 		return null
 	
 	return json.data
 
 
-func _clean_guilds(guilds: Array) -> void:
-	for guild in guilds:
+func _clean_guilds(p_guilds: Array) -> void:
+	for guild in p_guilds:
 		# Converts the unavailable property to available
 		if guild.has('unavailable'):
 			guild.available = not guild.unavailable
@@ -1220,10 +1348,11 @@ func _log(message_func: Callable) -> void:
 	if VERBOSE:
 		var message = str(message_func.call())
 		var start = "[color=DARK_OLIVE_GREEN][DiscordBot][/color] "
-		print_rich(start + ("\n"+start).join(message.split("\n")))
+		print_rich(start + ("\n" + start).join(message.split("\n")))
+
 
 func _log_error(message_func: Callable) -> void:
 	var message = str(message_func.call())
 	var start = "[color=RED][DiscordBot][/color] "
-	print_rich(start + ("\n"+start).join(message.split("\n")))
+	print_rich(start + ("\n" + start).join(message.split("\n")))
 #endregion

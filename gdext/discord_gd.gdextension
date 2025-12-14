@@ -1,0 +1,11 @@
+[configuration]
+entry_symbol = "discord_gd_gdext_init"
+compatibility_minimum = "4.2"
+
+[libraries]
+linux.debug.x86_64 = "./bin/libdiscord_gd_gdext.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "./bin/libdiscord_gd_gdext.linux.template_release.x86_64.so"
+windows.debug.x86_64 = "./bin/discord_gd_gdext.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "./bin/discord_gd_gdext.windows.template_release.x86_64.dll"
+macos.debug = "./bin/libdiscord_gd_gdext.macos.template_debug.dylib"
+macos.release = "./bin/libdiscord_gd_gdext.macos.template_release.dylib"

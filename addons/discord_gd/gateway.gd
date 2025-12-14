@@ -323,6 +323,7 @@ func send_payload(data: Dictionary) -> void:
 
 
 
+
 #region Private methods
 
 func _packet_received(packet: String) -> void:
@@ -331,14 +332,13 @@ func _packet_received(packet: String) -> void:
 		printerr("[DiscordGateway] Failed to parse packet: " + packet)
 		return
 
-	var op = int(dict.op)  # OP Code Received
-	var d = dict.d  # Data Received
+	var op = int(dict.op) # OP Code Received
+	var d = dict.d # Data Received
 	
-	_log(func (): return "\nGot packet with op=%s (%d)" % [OpCodes.find_key(op), op])
-	_log(func ():
+	_log(func():
 		if op == OpCodes.DISPATCH:
 			return ""
-		return packet)
+		return "\nGot packet with op=%s (%d)\n%s" % [OpCodes.find_key(op), op, packet])
 	
 	packet_received.emit(dict)
 	
@@ -537,6 +537,31 @@ func _invalid_session_received(should_resume: bool):
 
 
 
+#region Voice State
+
+## Send a voice state update to join or leave a voice channel
+## [param guild_id]: The guild ID
+## [param channel_id]: The channel ID to join, or null/empty to leave
+## [param self_mute]: Whether the bot should be muted
+## [param self_deaf]: Whether the bot should be deafened
+func send_voice_state_update(guild_id: String, channel_id, self_mute: bool = false, self_deaf: bool = false) -> void:
+	var payload = {
+		op = OpCodes.VOICE_STATE_UPDATE,
+		d = {
+			guild_id = guild_id,
+			channel_id = channel_id if channel_id else null,
+			self_mute = self_mute,
+			self_deaf = self_deaf
+		}
+	}
+	_log(func(): return "Sending voice state update: guild=%s, channel=%s, mute=%s, deaf=%s" % [guild_id, str(channel_id), self_mute, self_deaf])
+	send_payload(payload)
+
+#endregion
+
+
+
+
 #region common
 
 func _track_latency(p_latency: int):
@@ -551,13 +576,12 @@ func _track_latency(p_latency: int):
 	var avg = sum / _latencies.size()
 	latency = avg
 	_log(func(): return "Latency is %.2f ms" % avg)
-	
-	
+
 
 func _log(message_func: Callable) -> void:
 	if VERBOSE:
 		var message = str(message_func.call())
 		var start = "[color=CADET_BLUE][DiscordGateway][/color] "
-		print_rich(start + ("\n"+start).join(message.split("\n")))
+		print_rich(start + ("\n" + start).join(message.split("\n")))
 
 #endregion
