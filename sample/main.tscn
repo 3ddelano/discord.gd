@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://2dgx354yalo7"]
+
+[ext_resource type="Script" uid="uid://bg86ytluygmpe" path="res://main.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://dqss6smw7w8nh" path="res://addons/discord_gd/discord.gd" id="2_0xm2m"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ig7tw")
+
+[node name="DiscordBot" type="Node" parent="."]
+script = ExtResource("2_0xm2m")
+metadata/_custom_type_script = "uid://dqss6smw7w8nh"
