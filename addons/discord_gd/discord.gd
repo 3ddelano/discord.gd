@@ -4,10 +4,10 @@
 ## [url=https://github.com/3ddelano/discord.gd]Github - discord.gd[/url]
 class_name DiscordBot
 extends Node
-
-
-
-
+#
+#
+#
+#
 #region Constants
 
 const Gateway = preload("./gateway.gd")
@@ -45,10 +45,10 @@ const API_BASE_URL = BASE_DOMAIN + API_PATH
 const CDN_BASE_URL = 'https://cdn.discordapp.com'
 
 #endregion
-
-
-
-
+#
+#
+#
+#
 #region Public Variables
 
 var TOKEN: String
@@ -66,18 +66,19 @@ var channels = {}
 var users = {}
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region Signals
 
-signal bot_ready(bot)  # bot: DiscordBot
-signal guild_create(bot, guild)  # bot: DiscordBot, guild: Dictionary
-signal guild_update(bot, guild)  # bot: DiscordBot, guild: Dictionary
-signal guild_delete(bot, guild)  # bot: DiscordBot, guild: Dictionary
-signal message_create(bot, message, channel)  # bot: DiscordBot, message: Message, channel: Dictionary
-signal message_delete(bot, message)  # bot: DiscordBot, message: Dictionary
-signal interaction_create(bot, interaction)  # bot: DiscordBot, interaction: DiscordInteraction
+signal bot_ready(bot) # bot: DiscordBot
+signal guild_create(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal guild_update(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal guild_delete(bot, guild) # bot: DiscordBot, guild: Dictionary
+signal message_create(bot, message, channel) # bot: DiscordBot, message: Message, channel: Dictionary
+signal message_delete(bot, message) # bot: DiscordBot, message: Dictionary
+signal interaction_create(bot, interaction) # bot: DiscordBot, interaction: DiscordInteraction
 signal message_reaction_add(bot, data) # bot: DiscordBot, data: Dictionary
 signal message_reaction_remove(bot, data) # bot: DiscordBot, data: Dictionary
 signal message_reaction_remove_all(bot, data) # bot: DiscordBot, data: Dictionary
@@ -86,10 +87,10 @@ signal message_reaction_remove_emoji(bot, data) # bot: DiscordBot, data: Diction
 # Check the bot.gateway.dispatch_event_received signal!
 
 #endregion
-
-
-
-
+#
+#
+#
+#
 #region Private Variables
 
 var _headers: Array
@@ -98,11 +99,12 @@ var _headers: Array
 var _guilds_loaded = 0
 
 #endregion
+#
+#
+#
+#
+#region Public Functions
 
-
-
-
-# Public Functions
 func login() -> void:
 	_log(func(): return "Logging in...")
 	assert(TOKEN.length() > 10, 'ERROR: Unable to login. TOKEN attribute not set.')
@@ -125,8 +127,11 @@ func login() -> void:
 		_log_error(func(): return 'Failed to login: %s (%s)' % [error_string(err), err])
 		return
 
-
-
+#endregion
+#
+#
+#
+#
 #region messages
 
 func send(messageorchannelid, content, options: Dictionary = {}) -> Message:
@@ -151,9 +156,10 @@ func delete(message: Message):
 	return res
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region threads
 
 func start_thread(message: Message, thread_name: String, duration: int = 60 * 24) -> Dictionary:
@@ -165,9 +171,10 @@ func start_thread(message: Message, thread_name: String, duration: int = 60 * 24
 	return res
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region channels
 
 # See https://discord.com/developers/docs/resources/guild#create-guild-channel
@@ -224,9 +231,10 @@ func permissions_in(channel_id: String):
 	return permissions_for(user.id, channel_id)
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region guilds
 
 func get_guild_icon(guild_id: String, size: int = 256) -> PackedByteArray:
@@ -258,10 +266,67 @@ func get_guild_member(guild_id: String, member_id: String) -> Dictionary:
 	var member = await _send_get('/guilds/%s/members/%s' % [guild_id, member_id])
 	return member
 
+
+# Currently only available for tokens from user accounts
+# See https://github.com/discord/discord-api-spec/commit/976faf177d21062f258b116bbbb41b50be24fc0f#diff-437c78467c84435ab6de7d67d8d16163c385b59ddf443e7e8e23ade116a89c90R7901
+# Available options:
+# - content: String - Add filter for messages containing specific text
+# - author_id: String | Array[String] - Add filter for messages sent by a user
+# - author_type: String | Array[String] : "user" | "bot" | "webhook" | "-user" | "-bot" | "-webhook" - Add filter for messages sent by a user, bot, or webhook (or exclude using the -user, -bot, or -webhook)
+# - channel_id: String - Add filter for messages sent in a channel
+# - mentions: String | Array[String] - Add filter for messages mentioning a specific user
+# - mention_everyone: bool
+# - contents: Array[String] - Add filter for messages containing specific strings
+#
+# - slop: int - Value from 0-100
+# - mention_everyone: bool
+# - pinned: bool - whether to only include pinned messages
+# - cursor
+# - has
+# - link_hostname
+# - embed_provider
+# - embed_type
+# - attachment_extension
+# - attachment_filename
+# - command_id: String
+# - command_name: String
+# - include_nsfw: bool
+#
+# - sort_by: "timestamp" | "relevance" - Default is timestamp
+# - sort_order: "asc" | "desc" - Default is desc
+# - offset: int - Default is 0
+# - limit: int - Default is no limit
+# - min_id: String
+# - max_id: String
+#
+# Examples
+# - Search msgs containing 'some text' - { content = "some text" }
+#
+# - Search msgs containing 'some text' and sent by user with id '123'  - { content = "some text", author_id = "123" }
+#
+# - Search msgs containing 'some text' sent in channel with id '234' - { content = "some text", channel_id = "234" }
+#
+# - Search msgs mentioning the user '456' - { mentions = "456" }
+func search_guild_messages(guild_id: String, p_opts: Dictionary, p_user_token: String):
+	var opts = {
+		sort_by = "timestamp",
+		sort_order = "desc",
+		offset = 0,
+	}
+	
+	for key in p_opts:
+		opts[key] = p_opts[key]
+	
+	var client := HTTPClient.new()
+	print(client.query_string_from_dict(opts))
+	var headers = ["Authorization: %s" % p_user_token]
+	return await _send_get('/guilds/%s/messages/search?%s' % [guild_id, client.query_string_from_dict(opts)], HTTPClient.METHOD_GET, headers)
+
 #endregion
-
-
-
+#
+#
+#
+#
 #region guild member
 
 func remove_member_role(guild_id: String, user_id: String, role_id: String):
@@ -339,9 +404,10 @@ func permissions_for(user_id: String, channel_id: String):
 	return permissions
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region roles
 
 func create_role(guild_id: String, p_opts: Dictionary):
@@ -377,9 +443,10 @@ func delete_role(guild_id: String, role_id: String):
 	return res
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region reactions
 
 # ONLY custom emojis will work, pass in only the Id of the emoji to the custom_emoji
@@ -434,9 +501,10 @@ func get_reactions(messageordict, custom_emoji: String):
 	return ret
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region commands
 
 func register_command(command: ApplicationCommand, guild_id: String = '') -> ApplicationCommand:
@@ -526,32 +594,25 @@ func get_commands(guild_id: String = '') -> Array:
 
 
 ## [code]
-## p_options {
-## 	status: String, text of the presence,
-## 	afk: bool, whether or not the client is afk,
-## 		activity: {
-##			type: String, type of the presence,
-##			name: String, name of the presence,
-##			url: String, url of the presence,
-##			created_at: int, unix timestamp (in milliseconds) of when activity was added to user's session
-##		}
-##	}
+## p_options:
+##  - status: String - One of online, dnd, idle, invisible, offline (default online)
+##  - afk: bool, whether or not the client is afk,
+##  - activity:
+##     - type: String - One of playing, streaming, listening, watching, custom, competing
+##     - name: String, name of the presence,
+##     - url: String, url of the presence,
+##     - created_at: int, unix timestamp (in milliseconds) of when activity was added to user's session
 ## [/code]
 func set_presence(p_options: Dictionary) -> void:
-
 	var new_presence = {'status': 'online', 'afk': false, 'activity': {}}
-
-	assert(
-		typeof(p_options) == TYPE_DICTIONARY,
-		'Invalid Type: options in set_presence must be a Dictionary'
-	)
 
 	if p_options.has('status') and Helpers.is_valid_str(p_options.status):
 		assert(
 			str(p_options.status).to_upper() in PRESENCE_STATUS_TYPES,
-			'Invalid Type: status must be one of PRESENCE_STATUS_TYPES'
+			'Invalid Type: status must be one of ' + str(PRESENCE_STATUS_TYPES)
 		)
 		new_presence.status = p_options.status.to_lower()
+	
 	if p_options.has('afk') and typeof(p_options.afk) == TYPE_BOOL:
 		new_presence.afk = p_options.afk
 
@@ -582,8 +643,11 @@ func trigger_typing_indicator(p_channel_id: String):
 	var res = await _send_request('/channels/%s/typing' % [p_channel_id], {}, HTTPClient.METHOD_POST)
 	return res
 
-
-
+#endregion
+#
+#
+#
+#
 #region Inbuilt Functions
 
 func _ready() -> void:
@@ -595,9 +659,10 @@ func _ready() -> void:
 	add_child(gateway)
 
 #endregion
-
-
-
+#
+#
+#
+#
 #region Private Functions
 
 func _on_dispatch_event_received(event_name: String, data: Dictionary):
@@ -674,7 +739,7 @@ func _on_guild_member_update_event(member: Dictionary) -> void:
 
 	# Update users cache
 	var guild_user = member.user
-	var user_id =  guild_user.id
+	var user_id = guild_user.id
 	member.erase('user')
 	users[user_id] = guild_user
 
@@ -800,7 +865,7 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 		http_client.poll()
 		var chunk = http_client.read_response_body_chunk()
 		if chunk.size() != 0:
-			rb = rb + chunk  # Append to read buffer.
+			rb = rb + chunk # Append to read buffer.
 
 	var response = _from_json(rb.get_string_from_utf8())
 	if response == null:
@@ -844,29 +909,29 @@ func _send_request(slug: String, payload, method = HTTPClient.METHOD_POST):
 	var response_body: PackedByteArray = data[3]
 	
 	if send_res != HTTPRequest.RESULT_SUCCESS:
-		_log_error(func (): return "Failed to send request: Failed to connect to Discord HTTPS server for slug=%s" % slug)
+		_log_error(func(): return "Failed to send request: Failed to connect to Discord HTTPS server for slug=%s" % slug)
 		return null
 
 	var response = _from_json(response_body.get_string_from_utf8())
 	if response == null:
-		_log(func (): return "Got null response for request with slug=%s, response_code=%s" % [slug, response_code])
+		_log(func(): return "Got null response for request with slug=%s, response_code=%s" % [slug, response_code])
 		if response_code >= 200 and response_code < 300:
 			return true
 		return false
 
 	if response.has("code"):
 		# Got an error
-		_log(func (): return "Got error response for request with slug=%s. See output window" % slug)
-		_log(func (): return "Response code: %s" % response_code)
-		_log(func (): return "Error: " + JSON.stringify(response, "\t"))
+		_log(func(): return "Got error response for request with slug=%s. See output window" % slug)
+		_log(func(): return "Response code: %s" % response_code)
+		_log(func(): return "Error: " + JSON.stringify(response, "\t"))
 
 	if method != HTTPClient.METHOD_DELETE:
 		if response.has("code"):
-			_log_error(func (): return "Error sending request for slug=%s\n%s" % [slug, str(response)])
+			_log_error(func(): return "Error sending request for slug=%s\n%s" % [slug, str(response)])
 
 	if response.has("retry_after"):
 		# We got ratelimited
-		_log(func (): return "Request got ratelimited for slug=%s, retrying after %d seconds" % [slug, int(response.retry_after)])
+		_log(func(): return "Request got ratelimited for slug=%s, retrying after %d seconds" % [slug, int(response.retry_after)])
 		await get_tree().create_timer(int(response.retry_after)).timeout
 		return await _send_request(slug, payload, method)
 
@@ -880,14 +945,22 @@ func _get_dm_channel(channel_id: String) -> Dictionary:
 		_clean_channel(data)
 	return data
 
-
-func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []):
+func _send_get(slug: String, method = HTTPClient.METHOD_GET, additional_headers = []):
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
 
-	var headers = _headers + additional_headers
+	var headers = _headers.duplicate()
+	if additional_headers:
+		for head in additional_headers:
+			var split = head.split(":")
+			if split.size() != 2:
+				_log_error(func(): return "Invalid HTTP header: %s" % head)
+				continue
+			var key = split[0].strip_edges().to_lower()
+			_remove_header_from_array(headers, key)
+			headers.append(head)
 
-	_log(func (): return "Sending HTTP request for slug=%s, method=%d" % [slug, method])
+	_log(func(): return "Sending HTTP request for slug=%s, method=%d" % [slug, method])
 	http_request.request.call_deferred(API_BASE_URL + slug, headers, method)
 
 	var data = await http_request.request_completed
@@ -898,18 +971,18 @@ func _send_get(slug, method = HTTPClient.METHOD_GET, additional_headers = []):
 	var response_body: PackedByteArray = data[3]
 
 	if send_res != HTTPRequest.RESULT_SUCCESS:
-		_log(func (): return "Failed to send HTTP request for slug=%s, method=%d. Got result_code=%d" % [slug, method, send_res])
+		_log(func(): return "Failed to send HTTP request for slug=%s, method=%d. Got result_code=%d" % [slug, method, send_res])
 		return null
 	
 	if method == HTTPClient.METHOD_GET:
 		var response = _from_json(response_body.get_string_from_utf8())
 		if response != null and response.has('code'):
 			# Got an error
-			_log_error(func (): return "Method %d: status code %d" % [method, response_code])
-			_log_error(func (): return "Error sending HTTP request method=%d: " % method + JSON.stringify(response, '\t'))
+			_log_error(func(): return "Method %d: status code %d" % [method, response_code])
+			_log_error(func(): return "Error sending HTTP request method=%d: " % method + JSON.stringify(response, '\t'))
 		return response
 
-	else:  # Maybe a PUT/DELETE for reaction
+	else: # Maybe a PUT/DELETE for reaction
 		return data[1]
 
 
@@ -917,7 +990,7 @@ func _send_get_cdn(slug) -> PackedByteArray:
 	var http_request = HTTPRequest.new()
 	add_child(http_request)
 
-	_log(func (): return "Sending GET CDN request for slug=%s" % slug)
+	_log(func(): return "Sending GET CDN request for slug=%s" % slug)
 	if slug.find('/') == 0:
 		http_request.request(CDN_BASE_URL + slug, _headers)
 	else:
@@ -932,14 +1005,14 @@ func _send_get_cdn(slug) -> PackedByteArray:
 
 	# Check for errors
 	if send_res != HTTPRequest.RESULT_SUCCESS:
-		_log(func (): return "Failed to send GET CDN request: HTTP Failed")
+		_log(func(): return "Failed to send GET CDN request: HTTP Failed")
 		return PackedByteArray()
 
 	if response_code != 200:
-		_log(func (): return "HTTPS GET CDN Error: Status Code: %s" % response_code)
+		_log(func(): return "HTTPS GET CDN Error: Status Code: %s" % response_code)
 		return PackedByteArray()
 
-	_log(func (): return "Got CDN response for slug=%s" % slug)
+	_log(func(): return "Got CDN response for slug=%s" % slug)
 	return response_body
 
 
@@ -957,7 +1030,7 @@ func _send_message_request(
 
 	var slug
 	if messageorchannelid is Message:
-		slug ='/channels/%s/messages' % str(messageorchannelid.channel_id)
+		slug = '/channels/%s/messages' % str(messageorchannelid.channel_id)
 	else:
 		assert(messageorchannelid.length() > 16, 'channel_id is not valid')
 		slug = '/channels/%s/messages' % str(messageorchannelid)
@@ -981,7 +1054,7 @@ func _send_message_request(
 			content = content.substr(0, 2048)
 		payload.content = content
 
-	elif typeof(content) == TYPE_DICTIONARY:  # Check if the content is the options dictionary
+	elif typeof(content) == TYPE_DICTIONARY: # Check if the content is the options dictionary
 		options = content
 		content = null
 
@@ -1092,7 +1165,6 @@ func _send_message_request(
 	if method == HTTPClient.METHOD_DELETE:
 		return res
 	else:
-		
 		await _parse_message(res)
 		
 		if res.has("code") and res.has("errors"):
@@ -1110,7 +1182,7 @@ func _update_presence(new_presence: Dictionary) -> void:
 	var activity = new_presence.activity
 
 	var payload = {
-		op = 3,  # Presence update
+		op = 3, # Presence update
 		d = {
 			since = new_presence if new_presence.has('since') else null,
 			status = new_presence.status,
@@ -1132,7 +1204,7 @@ func _from_json(data: String) -> Variant:
 		return null
 	
 	if result != OK:
-		_log_error(func (): return "Failed to parse json: Error at line %s with msg %s for data %s" % [json.get_error_line(), json.get_error_message(), data])
+		_log_error(func(): return "Failed to parse json: Error at line %s with msg %s for data %s" % [json.get_error_line(), json.get_error_message(), data])
 		return null
 	
 	return json.data
@@ -1211,6 +1283,13 @@ func _parse_message(message) -> void:
 	return
 
 
+func _remove_header_from_array(headers: Array, key: String):
+	for i in range(headers.size()):
+		if headers[i].to_lower().begins_with(key + ": "):
+			headers.remove_at(i)
+			break
+
+
 func _float_to_int(dict, key):
 	if dict.has(key) and typeof(dict[key]) == TYPE_FLOAT:
 		dict[key] = int(dict[key])
@@ -1220,10 +1299,11 @@ func _log(message_func: Callable) -> void:
 	if VERBOSE:
 		var message = str(message_func.call())
 		var start = "[color=DARK_OLIVE_GREEN][DiscordBot][/color] "
-		print_rich(start + ("\n"+start).join(message.split("\n")))
+		print_rich(start + ("\n" + start).join(message.split("\n")))
 
 func _log_error(message_func: Callable) -> void:
 	var message = str(message_func.call())
 	var start = "[color=RED][DiscordBot][/color] "
-	print_rich(start + ("\n"+start).join(message.split("\n")))
+	print_rich(start + ("\n" + start).join(message.split("\n")))
+
 #endregion

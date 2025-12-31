@@ -1,13 +1,5 @@
 # Test scene
-_Main.gd
-_Main.tscn
-_WIKI.md
-project.godot
-icon.png
-icon.png.import
-
 .DS_Store
-sample/
 
 # Documentation build
 site/
