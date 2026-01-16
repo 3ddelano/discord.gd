@@ -235,6 +235,34 @@ func permissions_in(channel_id: String):
 #
 #
 #
+#region user
+
+## Returns a [User] object or error Dictionary
+func get_user(user_id: String):
+	var user_dict = await _send_get("/users/%s" % user_id)
+	if user_dict.has("id"):
+		return User.new(self, user_dict)
+	return user_dict
+
+
+## See [method get_user]
+func get_current_user():
+	return await get_user("@me")
+
+
+## user_data can have username, avatar and banner
+## Returns a [User] object or error Dictionary
+func update_current_user(user_data: Dictionary):
+	var user_dict = await _send_request("/users/@me", user_data, HTTPClient.METHOD_PATCH)
+	if user_dict.has("id"):
+		return User.new(self, user_dict)
+	return user_dict
+
+#endregion
+#
+#
+#
+#
 #region guilds
 
 func get_guild_icon(guild_id: String, size: int = 256) -> PackedByteArray:

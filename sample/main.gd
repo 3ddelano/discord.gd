@@ -18,7 +18,7 @@ func _ready() -> void:
 
 func _on_bot_ready(_bot: DiscordBot):
 	print("Logged in as %s#%s" % [bot.user.username, bot.user.discriminator])
-	print("Listening on %d channels and %d guilds." % [bot.channels.size(), bot.guilds.size()])
+	print("Listening on %d channels and %d guilds for command prefix %s" % [bot.channels.size(), bot.guilds.size(), PREFIX])
 	
 	bot.set_presence({
 		status = "online",
@@ -50,7 +50,8 @@ func _handle_command(command: String, args: Array[String], msg: Message, channel
 	print("Got command name=%s, user_id=%s, channel_id=%s, guild_id=%s" % [command, msg.author.id, msg.channel_id, msg.guild_id])
 
 	if command == "ping":
-		bot.reply(msg, "Pong!")
+		await bot.reply(msg, "Pong!")
+		return
 
 
 # Read DISCORD_BOT_TOKEN from .env file
