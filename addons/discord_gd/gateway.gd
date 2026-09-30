@@ -529,8 +529,14 @@ func _invalid_session_received(should_resume: bool):
 	if should_resume:
 		_resume()
 	else:
-		_log(func(): return "Got invalid session which cannot be resumed")
-	pass
+		_log(func(): return "Invalid session cannot be resumed; reconnecting with Identify")
+		_session_id = ""
+		_last_seq = -1
+		_resume_gateway_url = ""
+		_heartbeat_timer.stop()
+		# The closed-connection handler will reconnect; an empty session_id makes
+		# the next HELLO send IDENTIFY instead of RESUME.
+		_client.close(1000)
 
 #endregion
 
