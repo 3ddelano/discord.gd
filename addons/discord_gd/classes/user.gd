@@ -58,8 +58,12 @@ func get_display_avatar_url(options: Dictionary = {}) -> String:
 
 
 func get_default_avatar_url() -> String:
-	var moduloed_discriminator = int(discriminator) % 5
-	return client._cdn_base + '/embed/avatars/%s.png' % moduloed_discriminator
+	var avatar_index: int
+	if discriminator == '0':
+		avatar_index = (int(id) >> 22) % 6
+	else:
+		avatar_index = int(discriminator) % 5
+	return client._cdn_base + '/embed/avatars/%s.png' % avatar_index
 
 
 func get_display_avatar(options: Dictionary = {}) -> PackedByteArray:
