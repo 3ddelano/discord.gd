@@ -36,7 +36,7 @@ const _OPTION_TYPES = {
 	3: 'STRING',
 	4: 'INTEGER',
 	5: 'BOOLEAN',
-	6: 'COMMAND',
+	6: 'USER',
 	7: 'CHANNEL',
 	8: 'ROLE',
 	9: 'MENTIONABLE',
@@ -76,7 +76,7 @@ func set_type(p_type: String):
 	return self
 
 func get_type():
-	return _OPTION_TYPES[type]
+	return _COMMAND_TYPES[type]
 
 func get_application_id() -> String:
 	return application_id
