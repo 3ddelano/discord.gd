@@ -98,7 +98,7 @@ Pretty prints a Dictionary
 | Dictionary | to_print  |
 
 ### <a name="helpers-save-dict"></a>save_dict(to_save, filename?)
-Saves a Dictionary as a JSON file to the `user://` directory. This helps viewing large dictionaries which result in outpul overflow when printing.
+Saves a Dictionary as a JSON file to the `user://` directory. This helps viewing large dictionaries which result in output overflow when printing.
 > Returns: void
 
 !!! note

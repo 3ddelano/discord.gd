@@ -240,7 +240,7 @@ func _send_request(
 	}
 
 	if _type == RESPONSE_TYPES['UPDATE_MESSAGE']:
-		# Append the message parts from the original message if the options doesnt contain that part
+		# Append the message parts from the original message if the options don't contain that part
 		if not options.has('tts'):
 			payload.data.tts = message.tts
 		if not options.has('content'):

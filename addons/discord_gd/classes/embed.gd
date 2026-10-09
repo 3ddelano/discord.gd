@@ -79,7 +79,7 @@ func set_timestamp(_timestamp = ''):
 
 
 func set_color(_color):
-	# RBG color
+	# RGB color
 	if typeof(_color) == TYPE_ARRAY:
 		color = (int(_color[0]) * 256 * 256) + (int(_color[1]) * 256) + int(_color[2])
 

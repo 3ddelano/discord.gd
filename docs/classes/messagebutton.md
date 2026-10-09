@@ -137,7 +137,7 @@ new_emoji: Dictionary <small>See [Discord Emoji Structure](https://discord.com/d
 ```
 
 !!! note
-    This works only for Custom Emojis. The default ASCII emojis will not work. Its a limitation of Godot.
+    This works only for Custom Emojis. The default ASCII emojis will not work. It's a limitation of Godot.
 
 !!! note "Workaround for button emojis"
     If you want to use the default ASCII emojis as an emoji for the button.

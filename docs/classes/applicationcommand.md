@@ -27,7 +27,7 @@ Provides an interface to make and respond to Discord application commands.
 | String | guild_id?          | The guild id of the command, if not global                                   |
 | Array  | options            | The parameters for the command (only for `CHAT_INPUT` commands)              |
 | bool   | default_permission | Whether the command is enabled by default (default is `true`)                |
-| String | version            | Autoincrementing version identifier updated during substantial record hanges |
+| String | version            | Autoincrementing version identifier updated during substantial record changes |
 
 ## Methods
 | Returns             | Definition                                                                                                                              |
@@ -290,7 +290,7 @@ cmd1.add_option(
             ApplicationCommand.choice("Europe", "europe"),
             ApplicationCommand.choice("South America", "south-america"),
             ApplicationCommand.choice("North America", "north-america"),
-            ApplicationCommand.choice("Antartica", "antartica"),
+            ApplicationCommand.choice("Antarctica", "antartica"),
             ApplicationCommand.choice("Africa", "africa"),
             ApplicationCommand.choice("Oceania", "oceania"),
         ]
@@ -483,7 +483,7 @@ Prints the ApplicationCommand.
 Use the [[discordbot#discordbot-register-command|DiscordBot.register_command()]] and [[discordbot#discordbot-register-commands|DiscordBot.register_commands()]] methods to register commands.
 
 !!! warning ""
-    While developing commands it's better to use `guild level commands` since they update instantly while `global commands` take upto 1hr to update.
+    While developing commands it's better to use `guild level commands` since they update instantly while `global commands` take up to 1hr to update.
 
 #### Examples
 Making a `MESSAGE` command
@@ -523,7 +523,7 @@ func _on_bot_interaction_create(bot: DiscordBot, interaction: DiscordInteraction
             })
 
         "long-command":
-            # Incase your processing requires
+            # In case your processing requires
             # more than 3s, you can use defer_reply()
             interaction.defer_reply()
 

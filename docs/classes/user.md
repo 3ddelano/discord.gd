@@ -24,7 +24,7 @@ Stores all the data related to a user from Discord. It also has a few methods to
 | String | discriminator | The discriminator of the user                                                                                                                                      |
 | String | avatar        | The avatar hash of the user                                                                                                                                        |
 | bool   | bot           | Whether or not the user is a bot                                                                                                                                   |
-| bool   | system        | Wheter or not the user is an Official Discord System user                                                                                                          |
+| bool   | system        | Whether or not the user is an Official Discord System user                                                                                                          |
 | bool   | mfa_enabled   | Whether or not the user has two factor enabled on their account                                                                                                    |
 | String | locale        | The chosen language of the user                                                                                                                                    |
 | bool   | verified      | Whether or not user's email is verified                                                                                                                            |

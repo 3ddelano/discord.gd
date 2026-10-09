@@ -177,7 +177,7 @@ Send multiple embeds
 # Make two embeds
 var embed1 = Embed.new().set_description("This is embed 1")
 var embed2 = Embed.new().set_description("This is embed 2")
-# Snd them
+# Send them
 bot.send(message, {"embeds": [embed1, embed2]})
 ```
 
@@ -185,7 +185,7 @@ Send a text message and an embed
 ```GDScript
 # Make a new embed
 var embed = Embed.new().set_description("Hello")
-# Pass is as options
+# Pass it as options
 bot.send(message, "hello", {"embeds": [embed]})
 ```
 
@@ -300,7 +300,7 @@ Deletes the message with same id as message.
   The function returns `true` if the message is deleted, otherwise it returns the HTTP error code.
 
 !!! note
-    The bot should have `MANAGE_MESSAGES` permission inorder to delete messages of other users.
+    The bot should have `MANAGE_MESSAGES` permission in order to delete messages of other users.
 
 | Type    | Parameter | Description               |
 | ------- | --------- | ------------------------- |
@@ -311,7 +311,7 @@ Delete a message sent by the bot
 ```GDScript
 # Send a new message
 # Note: The yield is to ensure that the message is sent
-var msg = yield(bot.send(message, "This message will be delete"), "completed")
+var msg = yield(bot.send(message, "This message will be deleted"), "completed")
 
 # Delete the sent message
 var res = yield(bot.delete(msg), "completed")
@@ -425,7 +425,7 @@ Returns the permissions the bot has in a specific channel after applying channel
 | String | channel_id | The id of the channel |
 
 #### Examples
-Check if the bot has the `SEND_MESSAGES` pemissions before sending a message
+Check if the bot has the `SEND_MESSAGES` permissions before sending a message
 ```GDScript
 var perms = bot.permissions_in(message.channel_id)
 if not perms.has("SEND_MESSAGES"):
@@ -438,7 +438,7 @@ bot.send(message, "I can send messages :)")
 Returns the permissions for a specific user in a specific channel
 > Returns: Permissions
 !!! note
-    This currently only works for the Bot, since loading the guild users requires the GUILD_MEMBERS priviledged intent.
+    This currently only works for the Bot, since loading the guild users requires the GUILD_MEMBERS privileged intent.
 
 | Type   | Parameter  | Description           |
 | ------ | ---------- | --------------------- |
@@ -662,7 +662,7 @@ Deletes all reactions of the emoji on the message.
 | String  | custom_emoji | The custom id of the emoji to delete       |
 
 #### Examples
-Delete all reactions on the animated parrot emoji the mesasge
+Delete all reactions to the animated parrot emoji on the message
 ```GDScript
 # First react to the message with the animated parrot
 yield(bot.create_reaction(message, "565171769187500032"), "completed")
@@ -703,7 +703,7 @@ Register the command as a global or guild level command.
 > Returns: Promise<[[ApplicationCommand]]\>
 
 !!! note
-    While developing commands it's better to use guild level commands since they update instantly while global commands take upto 1hr to update.
+    While developing commands it's better to use guild level commands since they update instantly while global commands take up to 1hr to update.
     See [Discord registering a command docs](https://discord.com/developers/docs/interactions/application-commands#registering-a-command)
 
 

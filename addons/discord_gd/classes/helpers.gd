@@ -4,7 +4,7 @@ General purpose Helpers functions
 used by discord.gd plugin
 """
 
-# Returns true if value if an int or real float
+# Returns true if value is an int or real float
 static func is_num(value) -> bool:
 	return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 

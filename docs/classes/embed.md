@@ -15,7 +15,7 @@ Wrapper for an Embed on Discord
 Contains all the data of an embed. It also has a few chainable methods to make creating embeds easy
 
 ## Properties
-<small>See [Discord Embed Stucture](https://discord.com/developers/docs/resources/channel#embed-object-embed-structure)</small>
+<small>See [Discord Embed Structure](https://discord.com/developers/docs/resources/channel#embed-object-embed-structure)</small>
 
 | Type       | Name        | Description                                                                                                                                                          |
 | ---------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
