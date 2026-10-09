@@ -95,8 +95,8 @@ signal message_reaction_remove_emoji(bot, data) # bot: DiscordBot, data: Diction
 
 var _headers: Array
 
-# Count of the number of guilds initially loaded
-var _guilds_loaded = 0
+# Guilds from READY awaiting their initial GUILD_CREATE event
+var _pending_guilds = {}
 
 #endregion
 #
@@ -727,20 +727,19 @@ func _on_ready_event(data: Dictionary):
 	application = data.application
 	user = User.new(self, data.user)
 	
+	_pending_guilds.clear()
 	var _guilds = data.guilds
 	_clean_guilds(_guilds)
 	for guild in _guilds:
 		guilds[guild.id] = guild
+		_pending_guilds[guild.id] = true
+
+	if _pending_guilds.is_empty():
+		bot_ready.emit(self)
 
 
 func _on_guild_create_event(guild: Dictionary) -> void:
 	_clean_guilds([guild])
-	
-	# Update number of cached guilds
-	if guild.has('lazy') and guild.lazy:
-		_guilds_loaded += 1
-		if _guilds_loaded == guilds.size():
-			bot_ready.emit(self)
 
 	if not guilds.has(guild.id):
 		# Joined a new guild
@@ -748,6 +747,9 @@ func _on_guild_create_event(guild: Dictionary) -> void:
 
 	# Update cache
 	guilds[guild.id] = guild
+
+	if _pending_guilds.erase(guild.id) and _pending_guilds.is_empty():
+		bot_ready.emit(self)
 
 
 func _on_guild_update_event(guild: Dictionary) -> void:
