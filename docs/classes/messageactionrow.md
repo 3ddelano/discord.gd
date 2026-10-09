@@ -12,7 +12,7 @@ Represents an action row containing message components.
 ```
 
 ## Description
-Provides methods for adding and removing message compoenents from an action row.
+Provides methods for adding and removing message components from an action row.
 
 
 ## Properties

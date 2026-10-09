@@ -460,7 +460,7 @@ func _heartbeat_acked_received() -> void:
 
 func _heartbeat_timer_timeout() -> void:
 	if not _heartbeat_ack_received:
-		_log(func(): return "Closing WS because didnt receive heartbeat ack")
+		_log(func(): return "Closing WS because we didn't receive heartbeat ack")
 		_client.close(1002)
 		return
 

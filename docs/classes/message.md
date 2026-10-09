@@ -5,7 +5,7 @@ tags:
 ---
 
 # Message
-Entends: None
+Extends: None
 
 ```
 Represents a message from, or to Discord.

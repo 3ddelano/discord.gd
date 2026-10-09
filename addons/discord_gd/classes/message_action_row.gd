@@ -1,6 +1,6 @@
 class_name MessageActionRow
 """
-Represnts a Discord message action row which has components
+Represents a Discord message action row which has components
 """
 
 var components: Array

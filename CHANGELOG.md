@@ -80,7 +80,7 @@ For a more detailed list of past and incoming changes, see the commit history.
 ------
 - Updated `DiscordBot.send` to accept the channel_id or a `Message`
 - Added `DiscordBot.permissions_in()` to get bot permissions in a channel
-- Added `DiscordBot.permissions_for()` to get permmissions for a specific user (currently only Bot works)
+- Added `DiscordBot.permissions_for()` to get permissions for a specific user (currently only Bot works)
   
 1.1.2
 ------
@@ -89,7 +89,7 @@ For a more detailed list of past and incoming changes, see the commit history.
 - Fixed dynamic option in `User.get_display_avatar()`
 - Fixed a bug where `Message` did not store components.
 - Added `DiscordInteraction.delete_follow_up(message: Message)` to delete a sent follow up message.
-- Certain functions now use `push_error()` instead of `assert()` so that the program doesn't stop is an error occurs.
+- Certain functions now use `push_error()` instead of `assert()` so that the program doesn't stop if an error occurs.
 
 1.1.1
 ------

@@ -393,7 +393,7 @@ func permissions_for(user_id: String, channel_id: String):
 	# @everyone base role
 	var permissions = Permissions.new(guild.roles[guild.id].permissions)
 	if not guild.members.has(user_id):
-		push_warning('Member not found in cached members. Make sure the GUILD_MEMBERS intent is setup.')
+		push_warning('Member not found in cached members. Make sure the GUILD_MEMBERS intent is set up.')
 		return permissions
 
 	var role_ids = guild.members[user_id].roles
@@ -779,7 +779,7 @@ func _on_guild_member_update_event(member: Dictionary) -> void:
 
 
 func _on_message_create_event(msg: Dictionary) -> void:
-	# Dont respond to webhooks
+	# Don't respond to webhooks
 	if msg.has('webhook_id') and msg.webhook_id:
 		return
 
@@ -875,7 +875,7 @@ func _send_raw_request(slug: String, payload: Dictionary, method = HTTPClient.ME
 		http_client.poll()
 		await get_tree().process_frame
 
-	# Request is made, now extract the reponse body
+	# Request is made, now extract the response body
 	if not http_client.has_response():
 		_log_error(func(): return "Unable to upload file. Got empty response from server for slug=%s" % slug)
 		return null
@@ -1196,7 +1196,7 @@ func _send_message_request(
 		await _parse_message(res)
 		
 		if res.has("code") and res.has("errors"):
-			# its an error
+			# it's an error
 			return res
 		if not res.has("id"):
 			return res
@@ -1285,7 +1285,7 @@ func _parse_message(message) -> void:
 		return
 	
 	if typeof(message) != TYPE_DICTIONARY:
-		_log_error(func(): return "_parse_message expeceted object of type Dictionary")
+		_log_error(func(): return "_parse_message expected object of type Dictionary")
 		return
 	
 	_float_to_int(message, "type")

@@ -8,7 +8,7 @@ tags:
 Extends: None
 
 ```
-Data structure that makes it easier to intract with a bitfield
+Data structure that makes it easier to interact with a bitfield
 ```
 
 ## Description

@@ -84,7 +84,7 @@ func _init(message: Dictionary, client = null):
 		if not message.author is User:
 			message.author = User.new(client, message.author)
 		else:
-			assert(message.author is User, 'author attribute of Mesage must be of type User')
+			assert(message.author is User, 'author attribute of Message must be of type User')
 	author = message.author
 
 	if message.has('flags'):

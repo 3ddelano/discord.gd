@@ -119,7 +119,7 @@ Creates a reply to this interaction.
     Here the options means the message options. Like embeds, components, content, files, etc.
     The two new keys are `fetch_reply` and `ephemeral`.
 
-    If `fetch_reply` is true, the function will return a Promsise<[[Message]]> otherwise the function will return `true`.
+    If `fetch_reply` is true, the function will return a Promise<[[Message]]> otherwise the function will return `true`.
 
 options: Dictionary
 ```GDScript
